@@ -7,7 +7,7 @@ servers:
   - url: mony-worker.hgnguyen37.workers.dev
     description: Production server
 paths:
-  /:
+  /api/expenses:
     get:
       summary: Get expenses for a specific month and year
       description: Fetches a list of all expenses recorded for a given month and year.
@@ -49,6 +49,22 @@ paths:
       responses:
         '201':
           description: Expense added successfully.
+        '400':
+          description: Bad request, check the request body.
+        '500':
+          description: Internal server error.
+    put:
+      summary: Update an existing expense
+      description: Updates an existing expense record in the database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpense'
+      responses:
+        '200':
+          description: Expense updated successfully.
         '400':
           description: Bad request, check the request body.
         '500':
@@ -122,6 +138,31 @@ components:
           type: string
           description: The category of the expense.
       required:
+        - date
+        - amount
+        - description
+        - category
+    UpdateExpense:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The row ID of the expense to update.
+        date:
+          type: string
+          format: date
+          description: The date of the expense (YYYY-MM-DD).
+        amount:
+          type: number
+          description: The amount of the expense.
+        description:
+          type: string
+          description: A brief description of the expense.
+        category:
+          type: string
+          description: The category of the expense.
+      required:
+        - id
         - date
         - amount
         - description

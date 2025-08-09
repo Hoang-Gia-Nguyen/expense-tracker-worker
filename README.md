@@ -78,16 +78,15 @@ Follow these steps to set up your development environment:
     If you plan to deploy to Cloudflare Pages, update the `project-name` in the `deploy:pages` script within the root `package.json` to match your Cloudflare Pages project name.
 
 ## Local Development
+    *   **Apply Database Schema:**
+        The database schema is defined in `schema.sql`. Apply it to both your development and production databases:
+        ```bash
+        npx wrangler d1 execute cf-mony-worker-dev --local --file=./schema.sql
+        npx wrangler d1 execute cf-mony-worker-prod --file=./schema.sql
+        ```
 
-To run the entire application (frontend and backend) locally for development:
-
-```bash
-npm run dev
-```
-
-This command will:
--   Start a local server for the frontend application.
--   Start a local server for the backend worker, connected to your **development** D1 database.
+    *   **Update `wrangler.toml`:**
+        Open `wrangler.toml` and update the `database_id` values under the `[[d1_databases]]` section for both `binding = "DB"` (production) and `[env.dev.d1_databases]` (development) with the IDs you obtained in the previous steps. Ensure the `database_name` matches what you used during creation (e.g., `cf-mony-worker-dev`, `cf-mony-worker-prod`).
 -   Proxy requests from the frontend to the backend, allowing them to work together seamlessly.
 
 You can access the application at `http://localhost:8788` (or the URL provided by Wrangler).

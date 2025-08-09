@@ -118,11 +118,12 @@ This project uses `vitest` for unit and integration testing.
 
 *   **Run all tests:**
     ```bash
-    npm test
-    ```
-
-*   **Run tests with coverage report:**
+1.  **Start the worker in inspect mode:**
+    Run the following command from the project root:
     ```bash
+    npx wrangler dev --inspect
+    ```
+    This will provide a `ws://` URL.
     npm test -- --coverage
     ```
     After running, open `coverage/index.html` in your browser to view the detailed coverage report.

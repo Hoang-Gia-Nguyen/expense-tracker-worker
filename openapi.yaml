@@ -7,7 +7,7 @@ servers:
   - url: mony-worker.hgnguyen37.workers.dev
     description: Production server
 paths:
-  /api:
+  /api/expenses:
     get:
       summary: Get expenses for a specific month and year
       description: Fetches a list of all expenses recorded for a given month and year.

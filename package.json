@@ -8,6 +8,7 @@
     "itty-router": "^4.0.23"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
     "vitest": "^3.2.4"
   },
   "scripts": {

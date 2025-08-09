@@ -36,12 +36,26 @@ router.options('*', (request) => {
 });
 
 // Serve static assets
-router.get('*', async ({ request, env }) => {
+router.get('*', async (request, env, context) => {
+    // Skip asset handling for API routes
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api')) {
+        return undefined;
+    }
+
     try {
-        return await getAssetFromKV({ request, waitUntil: env.waitUntil }, {
-            ASSET_NAMESPACE: env.__STATIC_CONTENT,
-            ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
-        });
+        return await getAssetFromKV(
+            {
+                request,
+                // use waitUntil from context when available (Cloudflare Workers),
+                // fall back to env.waitUntil for tests or other environments
+                waitUntil: context?.waitUntil || env.waitUntil,
+            },
+            {
+                ASSET_NAMESPACE: env.__STATIC_CONTENT,
+                ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
+            }
+        );
     } catch (e) {
         // If the asset is not found, fall through to the next route (API or 404)
         return undefined;

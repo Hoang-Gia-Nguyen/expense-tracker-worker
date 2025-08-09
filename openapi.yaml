@@ -1,0 +1,128 @@
+openapi: 3.0.0
+info:
+  title: Expense Tracker API
+  description: API for managing personal expenses, designed for Cloudflare Workers.
+  version: 1.0.0
+servers:
+  - url: mony-worker.hgnguyen37.workers.dev
+    description: Production server
+paths:
+  /:
+    get:
+      summary: Get expenses for a specific month and year
+      description: Fetches a list of all expenses recorded for a given month and year.
+      parameters:
+        - name: year
+          in: query
+          required: true
+          description: The year to filter expenses by (e.g., 2025).
+          schema:
+            type: string
+        - name: month
+          in: query
+          required: true
+          description: The month to filter expenses by (e.g., 07 for July).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of expenses for the specified period.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '400':
+          description: Bad request, likely due to missing query parameters.
+        '500':
+          description: Internal server error.
+    post:
+      summary: Add a new expense
+      description: Creates a new expense record in the database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewExpense'
+      responses:
+        '201':
+          description: Expense added successfully.
+        '400':
+          description: Bad request, check the request body.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Delete an expense
+      description: Removes an expense record from the database using its row ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: The row ID of the expense to delete.
+              required:
+                - id
+      responses:
+        '200':
+          description: Expense deleted successfully.
+        '400':
+          description: Bad request, ID is likely missing.
+        '404':
+          description: Expense not found.
+        '500':
+          description: Internal server error.
+    options:
+      summary: CORS preflight request
+      description: Handles CORS preflight requests to allow cross-origin communication.
+      responses:
+        '204':
+          description: No content, CORS headers are sent.
+
+components:
+  schemas:
+    Expense:
+      type: object
+      properties:
+        rowid:
+          type: integer
+          description: The unique identifier for the expense.
+        Date:
+          type: string
+          format: date
+          description: The date of the expense (YYYY-MM-DD).
+        Amount:
+          type: number
+          description: The amount of the expense.
+        Description:
+          type: string
+          description: A brief description of the expense.
+        Category:
+          type: string
+          description: The category of the expense.
+    NewExpense:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: The date of the expense (YYYY-MM-DD).
+        amount:
+          type: number
+          description: The amount of the expense.
+        description:
+          type: string
+          description: A brief description of the expense.
+        category:
+          type: string
+          description: The category of the expense.
+      required:
+        - date
+        - amount
+        - description
+        - category

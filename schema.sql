@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS expense (
+    rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+    Date TEXT NOT NULL,
+    Amount REAL NOT NULL,
+    Description TEXT NOT NULL,
+    Category TEXT NOT NULL
+);

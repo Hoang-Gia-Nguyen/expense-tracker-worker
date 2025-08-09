@@ -1,0 +1,71 @@
+/* Add your custom styles here */
+
+/* Table Styles for better clarity and modern look */
+.table {
+    border-collapse: collapse; /* Use collapse for cleaner lines */
+    width: 100%;
+    border: 1px solid #dee2e6; /* Add a border to the whole table */
+}
+
+/* Style for table header */
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    font-weight: 600;
+    padding: 0.9rem;
+}
+
+/* Style for all table body rows - now all white */
+.table tbody tr {
+    background-color: #ffffff;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Remove the striping */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #ffffff;
+}
+
+/* A slightly more noticeable hover effect on the white rows */
+.table-hover tbody tr:hover {
+    background-color: #f1f3f5; /* A very light grey for hover */
+    cursor: pointer;
+}
+
+/* Cell padding and borders */
+.table td, .table th {
+    padding: 0.9rem;
+    vertical-align: middle;
+    border: 1px solid #dee2e6; /* Use a consistent border for all cells */
+}
+
+/* Highlighted Date separator style */
+.date-separator td {
+    background-color: #0d6efd; /* Bootstrap primary blue for highlighting */
+    color: #ffffff; /* White text for contrast */
+    font-weight: bold;
+    text-align: center; /* Center align the date */
+    padding: 0.75rem; /* Adjust padding */
+    border: 1px solid #0d6efd;
+}
+
+/* Actions column style */
+.actions-cell {
+    width: 1%; /* Allow the cell to shrink to content */
+    white-space: nowrap; /* Prevent buttons from wrapping */
+    text-align: center;
+}
+
+/* Modify button style - changed to warning/yellow for high contrast */
+.btn-info {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000; /* Black text for better readability on yellow */
+}
+
+.btn-info:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+

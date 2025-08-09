@@ -1,0 +1,40 @@
+# This is the configuration file for Wrangler, the Cloudflare command-line tool.
+
+# The name of your worker. This should match the name in the dashboard.
+name = "expense-tracker"
+
+# The entry point for your worker's code.
+main = "index.js"
+# A compatibility date ensures your worker runs on a stable version of the Workers runtime.
+compatibility_date = "2025-07-27"
+
+[assets]
+directory = "./public/"
+
+# ---------------------------------------------------------------------------
+# PRODUCTION ENVIRONMENT
+# This section configures your live environment. It points to your existing
+# production D1 database.
+# ---------------------------------------------------------------------------
+[env.production]
+routes = [
+  { pattern = "expensetracker.hgnlab.org", custom_domain = true }
+]
+[[env.production.d1_databases]]
+binding = "D1_DATABASE" # This is the variable name used in your worker's code (env.D1_DATABASE)
+database_name = "mony"
+database_id = "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
+
+
+# ---------------------------------------------------------------------------
+# DEVELOPMENT ENVIRONMENT
+# This section is for your local development. It will point to a new,
+# separate database that you will create in the next step.
+# ---------------------------------------------------------------------------
+[env.development]
+[[env.development.d1_databases]]
+binding = "D1_DATABASE"
+database_name = "mony-development-db"
+database_id = "ea700681-91ef-4825-bbe4-7ee90f9519be"
+
+

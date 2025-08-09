@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [],
+  "routes": [
+    {
+      "route": "/api",
+      "function": "/cf-mony-worker/index.js"
+    }
+  ]
+}

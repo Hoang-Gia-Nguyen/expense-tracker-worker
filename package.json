@@ -1,0 +1,10 @@
+{
+  "name": "cf-mony-worker",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "itty-router": "^4.0.23",
+    "@cloudflare/kv-asset-handler": "^0.2.0"
+  }
+}

@@ -8,14 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { JSDOM } from 'jsdom';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Resolve scripts.js path relative to this test file
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const SCRIPTS_PATH = path.resolve(__dirname, './scripts.js');
+import { createExpenseTrackerApp } from './scripts.js'; // New import
 
 /** ---------- Helpers ---------- */
 function buildHTML() {
@@ -88,13 +81,9 @@ function buildHTML() {
   `;
 }
 
-function readScriptsJs() {
-  return fs.readFileSync(SCRIPTS_PATH, 'utf-8');
-}
-
 /**
- * Boots a fresh JSDOM, injects globals/mocks, evaluates scripts.js,
- * and fires DOMContentLoaded to start the app.
+ * Boots a fresh JSDOM, injects globals/mocks, initializes the app,
+ * and returns the app instance and mocks. 
  */
 async function bootApp({
   initialGet = { ok: true, json: async () => [] },
@@ -129,9 +118,7 @@ async function bootApp({
   window.bootstrap = global.bootstrap;
 
   // Chart mock that provides destroy()
-  const destroySpyFirst = vi.fn();
   const chartFactory = vi.fn(() => {
-    // Each new Chart gets its own destroy spy
     const instance = { destroy: vi.fn() };
     return instance;
   });
@@ -148,12 +135,39 @@ async function bootApp({
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
 
-  // Evaluate scripts.js
-  const code = readScriptsJs();
-  window.eval(code);
+  // --- NEW: Initialize the app using createExpenseTrackerApp ---
+  const domElements = {
+    expenseForm: document.getElementById('expense-form'),
+    expenseList: document.getElementById('expense-list'),
+    dateInput: document.getElementById('date'),
+    amountInput: document.getElementById('amount'),
+    descriptionInput: document.getElementById('description'),
+    categoryInput: document.getElementById('category'),
+    addExpenseBtn: document.getElementById('add-expense-btn'),
+    monthPicker: document.getElementById('month-picker'),
+    categoryFilter: document.getElementById('category-filter'),
+    totalSummaryDiv: document.getElementById('total-summary'),
+    dailySpendingSummaryDiv: document.getElementById('daily-spending-summary'),
+    startOfMonthSummaryDiv: document.getElementById('start-of-month-summary'),
+    budgetedSummaryDiv: document.getElementById('budgeted-summary'),
+    otherSpendingSummaryDiv: document.getElementById('other-spending-summary'),
+    chartCanvas: document.getElementById('expense-chart'),
+    deleteConfirmModal: new bootstrap.Modal(document.getElementById('delete-confirm-modal')),
+    deleteModalBody: document.getElementById('delete-modal-body'),
+    confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
+    deleteAmountInput: document.getElementById('delete-amount-input'),
+    deleteWarning: document.getElementById('delete-warning'),
+    modifyExpenseModal: new bootstrap.Modal(document.getElementById('modify-expense-modal')),
+    modifyExpenseForm: document.getElementById('modify-expense-form'),
+    modifyExpenseIdInput: document.getElementById('modify-expense-id'),
+    modifyDateInput: document.getElementById('modify-date'),
+    modifyAmountInput: document.getElementById('modify-amount'),
+    modifyDescriptionInput: document.getElementById('modify-description'),
+    modifyCategoryInput: document.getElementById('modify-category'),
+    confirmModifyBtn: document.getElementById('confirm-modify-btn')
+  };
 
-  // Fire DOMContentLoaded to run the app's init
-  // REMOVED: document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  const app = createExpenseTrackerApp(domElements); // Initialize the app
 
   // Allow pending microtasks & timers (for the 10ms setTimeout in summaries)
   await Promise.resolve();
@@ -167,6 +181,7 @@ async function bootApp({
     chartFactory,
     showSpy,
     hideSpy,
+    app, // Return the app instance
     cleanup: () => {
       vi.restoreAllMocks();
       if (useFakeTimers) vi.useRealTimers();
@@ -316,12 +331,12 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const amount = document.getElementById('amount');
 
     amount.value = '1234';
-    amount.setSelectionRange(4, 4);
+    // Removed setSelectionRange calls for debugging
     amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     expect(amount.value).toBe('1.234');
 
     amount.value = '1234567';
-    amount.setSelectionRange(7, 7);
+    // Removed setSelectionRange calls for debugging
     amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     expect(amount.value).toBe('1.234.567');
 

@@ -1,0 +1,37 @@
+name: Test and Coverage
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - test-develop
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x' # Or your preferred Node.js version
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run Vitest and collect coverage
+      run: npm test -- --coverage # Assumes your "test" script in package.json runs vitest
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # Required for private repos, optional for public
+        directory: ./coverage # Adjust if your coverage report is in a different directory
+        fail_ci_if_error: true # Optional: Fail CI if Codecov upload fails

@@ -4,16 +4,22 @@ This project is a simple expense tracker with a web-based interface and a server
 
 ## Project Structure
 
-This project is set up as a monorepo, with the frontend and backend code located in the `packages` directory.
+This project is a Cloudflare Worker application. The key files and folders are:
 
 ```
 /
-├── packages/
-│   ├── cf-mony-worker/   # The Cloudflare Worker backend
-│   └── web-app/          # The frontend web application
-├── .gitignore            # Files to be ignored by Git
-├── package.json          # Main project configuration and scripts
-└── README.md             # This file
+├── .github/                 # GitHub Actions workflows
+├── public/                  # Frontend static assets
+├── .gitignore               # Git ignore file
+├── GEMINI.md                # Gemini CLI configuration
+├── index.js                 # Main Cloudflare Worker entry point
+├── index.test.js            # Unit tests for the Worker
+├── openapi.yaml             # OpenAPI specification for the API
+├── package.json             # Project dependencies and scripts
+├── README.md                # This file
+├── schema.sql               # Database schema for Cloudflare D1
+├── vitest.config.js         # Vitest testing framework configuration
+└── wrangler.toml            # Cloudflare Wrangler configuration
 ```
 
 ## Prerequisites
@@ -28,8 +34,8 @@ Follow these steps to set up your development environment:
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
-    cd fin-app
+    git clone https://github.com/Hoang-Gia-Nguyen/expense-tracker-worker.git
+    cd expense-tracker-worker
     ```
 
 2.  **Install dependencies:**

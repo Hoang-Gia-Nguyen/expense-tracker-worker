@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'jsdom',
     coverage: {
       provider: 'v8',
-      include: ['public/scripts.js'], // Include scripts.js for coverage
+      include: ['public/scripts.js', 'index.js'], // Include scripts.js and index.js for coverage
     },
   },
   server: {

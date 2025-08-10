@@ -38,13 +38,14 @@ export function createExpenseTrackerApp(domElements) {
     const {
         expenseForm, expenseList, dateInput, amountInput, descriptionInput, categoryInput,
         addExpenseBtn, monthPicker, categoryFilter, totalSummaryDiv, dailySpendingSummaryDiv,
-        startOfMonthSummaryDiv, budgetedSummaryDiv, otherSpendingSummaryDiv, chartCanvas,
+        startOfMonthSummaryDiv, budgetedSummaryDiv, otherSpendingSummaryDiv, chartCanvas, burndownCanvas,
         deleteConfirmModal, deleteModalBody, confirmDeleteBtn, deleteAmountInput, deleteWarning,
         modifyExpenseModal, modifyExpenseForm, modifyExpenseIdInput, modifyDateInput,
         modifyAmountInput, modifyDescriptionInput, modifyCategoryInput, confirmModifyBtn
     } = domElements;
 
     let expenseChart = null;
+    let burndownChart = null;
     let allExpensesForMonth = [];
 
     const today = new Date();
@@ -120,6 +121,75 @@ export function createExpenseTrackerApp(domElements) {
         });
     }
 
+    function renderBurndownChart(data) {
+        const [year, month] = monthPicker.value.split('-');
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const dailySpendingCategories = categoryOrder.filter(category => monthlyBudget.hasOwnProperty(category) && !startOfMonthCategories.includes(category));
+        const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudget[category] || 0), 0);
+
+        const dailyTotals = Array(daysInMonth).fill(0);
+        data.forEach(expense => {
+            const date = new Date(expense.Date);
+            const expMonth = String(date.getMonth() + 1).padStart(2, '0');
+            const expYear = String(date.getFullYear());
+            if (expYear === year && expMonth === month && dailySpendingCategories.includes(expense.Category)) {
+                dailyTotals[date.getDate() - 1] += expense.Amount;
+            }
+        });
+
+        const actual = [];
+        let running = 0;
+        for (let i = 0; i < daysInMonth; i++) {
+            running += dailyTotals[i];
+            actual.push(running);
+        }
+
+        const expected = [];
+        const dailyRate = dailyBudget / daysInMonth;
+        for (let i = 0; i < daysInMonth; i++) {
+            expected.push(dailyRate * (i + 1));
+        }
+
+        const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+        if (burndownChart) {
+            burndownChart.destroy();
+        }
+
+        burndownChart = new Chart(burndownCanvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Actual Spending',
+                        data: actual,
+                        borderColor: '#36A2EB',
+                        fill: false,
+                        tension: 0
+                    },
+                    {
+                        label: 'Expected Spending',
+                        data: expected,
+                        borderColor: '#FF6384',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Daily Spending Burndown' }
+                }
+            }
+        });
+    }
+
     function renderSummaries(data) {
         const summary = data.reduce((acc, expense) => {
             const category = expense.Category;
@@ -132,6 +202,7 @@ export function createExpenseTrackerApp(domElements) {
         }, {});
 
         renderChart(summary);
+        renderBurndownChart(data);
 
         // Clear existing content to reset animations
         totalSummaryDiv.innerHTML = '';

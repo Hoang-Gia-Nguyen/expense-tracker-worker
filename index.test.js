@@ -103,6 +103,16 @@ describe('GET /api', () => {
         await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
     });
 
+    it('should return 200 with null CORS headers for disallowed origin', async () => {
+        const request = createMockRequest('http://localhost/api?year=2023&month=01', 'GET', { 'Origin': 'https://malicious.com' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('null');
+        expect(response.headers.get('Access-Control-Allow-Methods')).toBeNull();
+        expect(response.headers.get('Access-Control-Allow-Headers')).toBeNull();
+    });
+
     describe('CORS Preflight (OPTIONS) requests', () => {
         it('should return 204 with correct CORS headers for allowed origin', async () => {
             const request = createMockRequest('http://localhost/api', 'OPTIONS', {

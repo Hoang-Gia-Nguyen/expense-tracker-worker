@@ -24,11 +24,14 @@ describe('index.html structure', () => {
     const descriptionInput = document.getElementById('description');
     const categoryInput = document.getElementById('category');
     const addBtn = document.getElementById('add-expense-btn');
-
-    expect(dateInput?.getAttribute('type')).toBe('date');
+    expect(dateInput).toBeTruthy();
+    expect(dateInput.getAttribute('type')).toBe('date');
     expect(amountInput).toBeTruthy();
     expect(descriptionInput).toBeTruthy();
-    expect(categoryInput?.tagName).toBe('SELECT');
+    expect(categoryInput).toBeTruthy();
+    expect(categoryInput.tagName).toBe('SELECT');
+    expect(addBtn).toBeTruthy();
+    expect(addBtn.disabled).toBe(true);
     expect(addBtn?.disabled).toBe(true);
   });
 

@@ -4,7 +4,7 @@
   "exclude": [],
   "routes": [
     {
-      "route": "/api",
+      "route": "/api/expense",
       "function": "/cf-mony-worker/index.js"
     }
   ]

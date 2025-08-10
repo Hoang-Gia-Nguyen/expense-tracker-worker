@@ -59,6 +59,7 @@ function buildHTML() {
     </table>
 
     <canvas id="expense-chart"></canvas>
+    <canvas id="burndown-chart"></canvas>
 
     <!-- Delete modal -->
     <div id="delete-confirm-modal"></div>
@@ -152,6 +153,7 @@ async function bootApp({
     budgetedSummaryDiv: document.getElementById('budgeted-summary'),
     otherSpendingSummaryDiv: document.getElementById('other-spending-summary'),
     chartCanvas: document.getElementById('expense-chart'),
+    burndownCanvas: document.getElementById('burndown-chart'),
     deleteConfirmModal: new bootstrap.Modal(document.getElementById('delete-confirm-modal')),
     deleteModalBody: document.getElementById('delete-modal-body'),
     confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
@@ -285,15 +287,17 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(textContent(other)).toContain('Other');
     expect(textContent(other)).toContain('100.000 ₫');
 
-    // Chart called once with labels for Food, Transportation, Entertainment (Medical/Utility skipped because total 0)
-    expect(chartFactory).toHaveBeenCalledTimes(1); // Corrected: scripts.js calls fetchExpensesForMonth() only inside DOMContentLoaded
-    const chartArgs = chartFactory.mock.calls[0];
-    expect(chartArgs[1]).toMatchObject({
+    // Charts rendered for pie and burndown
+    expect(chartFactory).toHaveBeenCalledTimes(2);
+    const pieArgs = chartFactory.mock.calls[0];
+    expect(pieArgs[1]).toMatchObject({
       type: 'pie',
       data: {
         labels: ['Food', 'Transportation', 'Entertainment'],
       },
     });
+    const burnArgs = chartFactory.mock.calls[1];
+    expect(burnArgs[1]).toMatchObject({ type: 'line' });
 
     cleanup();
   });
@@ -569,10 +573,12 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const lastUrl = fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0];
     expect(lastUrl).toMatch('/api/expense?year=2025&month=07');
 
-    // Chart called twice and first instance destroyed on second render
-    expect(chartFactory).toHaveBeenCalledTimes(2); // Corrected: 1 initial call + 1 on month change
-    const firstChart = chartFactory.mock.results[0].value;
-    expect(firstChart.destroy).toHaveBeenCalledTimes(1);
+    // Charts called twice initially and twice after month change; initial charts destroyed
+    expect(chartFactory).toHaveBeenCalledTimes(4);
+    const firstPie = chartFactory.mock.results[0].value;
+    const firstBurn = chartFactory.mock.results[1].value;
+    expect(firstPie.destroy).toHaveBeenCalledTimes(1);
+    expect(firstBurn.destroy).toHaveBeenCalledTimes(1);
 
     cleanup();
   });

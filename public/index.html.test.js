@@ -43,4 +43,9 @@ describe('index.html structure', () => {
     const script = document.querySelector('script[type="module"][src="scripts.js"]');
     expect(script).not.toBeNull();
   });
+
+  it('includes canvases for expense and burndown charts', () => {
+    expect(document.getElementById('expense-chart')).not.toBeNull();
+    expect(document.getElementById('burndown-chart')).not.toBeNull();
+  });
 });

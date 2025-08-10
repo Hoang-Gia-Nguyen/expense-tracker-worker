@@ -39,7 +39,7 @@ router.options('*', (request) => {
 router.get('*', async (request, env, context) => {
     // Skip asset handling for API routes
     const url = new URL(request.url);
-    if (url.pathname.startsWith('/api')) {
+    if (url.pathname.startsWith('/api/expense')) {
         return undefined;
     }
 
@@ -63,7 +63,7 @@ router.get('*', async (request, env, context) => {
 });
 
 // Handle GET requests
-router.get('/api', async (request, env) => {
+router.get('/api/expense', async (request, env) => {
     const origin = request.headers.get('Origin');
     const corsHeaders = getCorsHeaders(origin);
     try {
@@ -92,7 +92,7 @@ router.get('/api', async (request, env) => {
 });
 
 // Handle POST requests
-router.post('/api', async (request, env) => {
+router.post('/api/expense', async (request, env) => {
     const origin = request.headers.get('Origin');
     const corsHeaders = getCorsHeaders(origin);
     try {
@@ -120,7 +120,7 @@ router.post('/api', async (request, env) => {
 });
 
 // Handle PUT requests
-router.put('/api', async (request, env) => {
+router.put('/api/expense', async (request, env) => {
     const origin = request.headers.get('Origin');
     const corsHeaders = getCorsHeaders(origin);
     try {
@@ -148,7 +148,7 @@ router.put('/api', async (request, env) => {
 });
 
 // Handle DELETE requests
-router.delete('/api', async (request, env) => {
+router.delete('/api/expense', async (request, env) => {
     const origin = request.headers.get('Origin');
     const corsHeaders = getCorsHeaders(origin);
     try {

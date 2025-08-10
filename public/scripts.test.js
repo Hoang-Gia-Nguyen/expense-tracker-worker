@@ -221,10 +221,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
       initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
     });
 
-    // Initial GET called once with /api?year=YYYY&month=MM (based on mocked date 2025-08-09)
+    // Initial GET called once with /api/expense?year=YYYY&month=MM (based on mocked date 2025-08-09)
     expect(fetchMock).toHaveBeenCalledTimes(1); // Corrected: scripts.js calls fetchExpensesForMonth() only inside DOMContentLoaded
     const firstUrl = fetchMock.mock.calls[0][0];
-    expect(firstUrl).toMatch(/^\/api\?year=2025&month=08$/);
+    expect(firstUrl).toMatch(/^\/api\/expense\?year=2025&month=08$/);
 
     // Date input & month picker set
     const dateInput = document.getElementById('date');
@@ -386,7 +386,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // Mock POST then GET refresh
     fetchMock
-      .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // POST /api
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // POST /api/expense
       .mockResolvedValueOnce({ ok: true, json: async () => SAMPLE_EXPENSES }); // GET refresh
 
     const date = document.getElementById('date');
@@ -421,7 +421,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(postBody.amount).toBe(1234567);
 
     // After POST ok, a GET refresh is issued
-    expect(fetchMock.mock.calls.some(c => typeof c[0] === 'string' && c[0].startsWith('/api?year='))).toBe(true);
+    expect(fetchMock.mock.calls.some(c => typeof c[0] === 'string' && c[0].startsWith('/api/expense?year='))).toBe(true);
 
     // Form date reset back to "today" (2025-08-09 in our mocked clock)
     expect(document.getElementById('date').value).toBe('2025-08-09');
@@ -567,7 +567,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // Second GET has month=07
     const lastUrl = fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0];
-    expect(lastUrl).toMatch('/api?year=2025&month=07');
+    expect(lastUrl).toMatch('/api/expense?year=2025&month=07');
 
     // Chart called twice and first instance destroyed on second render
     expect(chartFactory).toHaveBeenCalledTimes(2); // Corrected: 1 initial call + 1 on month change

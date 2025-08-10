@@ -33,8 +33,8 @@ describe('static asset handling', () => {
     expect(call[0].waitUntil).toBe(context.waitUntil);
   });
 
-  it('ignores /api routes when serving assets', async () => {
-    const request = new Request('http://localhost/api?year=2023&month=01');
+  it('ignores /api/expense routes when serving assets', async () => {
+    const request = new Request('http://localhost/api/expense?year=2023&month=01');
     const env = {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},

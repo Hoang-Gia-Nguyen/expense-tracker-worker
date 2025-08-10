@@ -33,7 +33,7 @@ const createMockRequest = (url, method = 'GET', headers = {}, body = null) => {
     return request;
 };
 
-describe('GET /api', () => {
+describe('GET /api/expense', () => {
     beforeEach(() => {
         // Reset mocks before each test
         vi.clearAllMocks();
@@ -54,7 +54,7 @@ describe('GET /api', () => {
         ];
         mockAll.mockResolvedValueOnce({ results: mockExpenses });
 
-        const request = createMockRequest('http://localhost/api?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const request = createMockRequest('http://localhost/api/expense?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
@@ -67,7 +67,7 @@ describe('GET /api', () => {
 
     it('should return an empty array if no expenses are found', async () => {
         // Default mockAll already returns empty results
-        const request = createMockRequest('http://localhost/api?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
+        const request = createMockRequest('http://localhost/api/expense?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
@@ -77,7 +77,7 @@ describe('GET /api', () => {
     });
 
     it('should return 400 if year is missing', async () => {
-        const request = createMockRequest('http://localhost/api?month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const request = createMockRequest('http://localhost/api/expense?month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -85,7 +85,7 @@ describe('GET /api', () => {
     });
 
     it('should return 400 if month is missing', async () => {
-        const request = createMockRequest('http://localhost/api?year=2023', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const request = createMockRequest('http://localhost/api/expense?year=2023', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -96,7 +96,7 @@ describe('GET /api', () => {
         const errorMessage = 'Database connection error';
         mockAll.mockRejectedValueOnce(new Error(errorMessage));
 
-        const request = createMockRequest('http://localhost/api?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const request = createMockRequest('http://localhost/api/expense?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
@@ -105,7 +105,7 @@ describe('GET /api', () => {
 
     describe('CORS Preflight (OPTIONS) requests', () => {
         it('should return 204 with correct CORS headers for allowed origin', async () => {
-            const request = createMockRequest('http://localhost/api', 'OPTIONS', {
+            const request = createMockRequest('http://localhost/api/expense', 'OPTIONS', {
                 'Origin': 'https://expensetracker.hgnlab.org',
                 'Access-Control-Request-Method': 'GET',
                 'Access-Control-Request-Headers': 'Content-Type',
@@ -119,7 +119,7 @@ describe('GET /api', () => {
         });
 
         it('should return 204 with Access-Control-Allow-Origin: null for disallowed origin', async () => {
-            const request = createMockRequest('http://localhost/api', 'OPTIONS', {
+            const request = createMockRequest('http://localhost/api/expense', 'OPTIONS', {
                 'Origin': 'https://malicious.com',
                 'Access-Control-Request-Method': 'GET',
                 'Access-Control-Request-Headers': 'Content-Type',
@@ -158,7 +158,7 @@ describe('Static Asset Serving', () => {
     });
 });
 
-describe('POST /api', () => {
+describe('POST /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockRun.mockResolvedValue({ success: true });
@@ -173,7 +173,7 @@ describe('POST /api', () => {
             description: 'New Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, newExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, newExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(201);
@@ -190,7 +190,7 @@ describe('POST /api', () => {
             description: 'New Book',
             // category is missing
         };
-        const request = createMockRequest('http://localhost/api', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -204,7 +204,7 @@ describe('POST /api', () => {
             description: 'New Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -221,7 +221,7 @@ describe('POST /api', () => {
             description: 'New Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, newExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, newExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
@@ -229,7 +229,7 @@ describe('POST /api', () => {
     });
 });
 
-describe('PUT /api', () => {
+describe('PUT /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockRun.mockResolvedValue({ success: true });
@@ -245,7 +245,7 @@ describe('PUT /api', () => {
             description: 'Updated Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, updatedExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, updatedExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
@@ -263,7 +263,7 @@ describe('PUT /api', () => {
             // description is missing
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteUpdate);
+        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteUpdate);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -278,7 +278,7 @@ describe('PUT /api', () => {
             description: 'Updated Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidUpdate);
+        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidUpdate);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -296,7 +296,7 @@ describe('PUT /api', () => {
             description: 'Updated Book',
             category: 'Education',
         };
-        const request = createMockRequest('http://localhost/api', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, updatedExpense);
+        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, updatedExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
@@ -304,7 +304,7 @@ describe('PUT /api', () => {
     });
 });
 
-describe('DELETE /api', () => {
+describe('DELETE /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockRun.mockResolvedValue({ success: true });
@@ -316,7 +316,7 @@ describe('DELETE /api', () => {
         const expenseToDelete = { id: 1 };
         mockRun.mockResolvedValueOnce({ success: true }); // Explicitly mock for this test
 
-        const request = createMockRequest('http://localhost/api', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
+        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
@@ -328,7 +328,7 @@ describe('DELETE /api', () => {
 
     it('should return 400 if id is missing', async () => {
         const incompleteDelete = { /* id is missing */ };
-        const request = createMockRequest('http://localhost/api', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteDelete);
+        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteDelete);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
@@ -339,7 +339,7 @@ describe('DELETE /api', () => {
         const expenseToDelete = { id: 999 }; // Non-existent ID
         mockRun.mockResolvedValueOnce({ success: false }); // Simulate no rows affected
 
-        const request = createMockRequest('http://localhost/api', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
+        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(404);
@@ -351,7 +351,7 @@ describe('DELETE /api', () => {
         mockRun.mockRejectedValueOnce(new Error(errorMessage));
 
         const expenseToDelete = { id: 1 };
-        const request = createMockRequest('http://localhost/api', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
+        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);

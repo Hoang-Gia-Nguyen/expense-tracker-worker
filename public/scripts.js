@@ -1,4 +1,4 @@
-const apiUrl = '/api';
+const apiUrl = '/api/expense';
 const monthlyBudget = {
     'Food': 5000000,
     'Medical/Utility': 2000000,

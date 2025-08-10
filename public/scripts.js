@@ -121,7 +121,7 @@ export function createExpenseTrackerApp(domElements) {
         });
     }
 
-    function renderBurndownChart(data) {
+        const dailySpendingCategories = categoryOrder.filter(category => Object.prototype.hasOwnProperty.call(monthlyBudget, category) && !startOfMonthCategories.includes(category));
         const [year, month] = monthPicker.value.split('-');
         const daysInMonth = new Date(year, month, 0).getDate();
 

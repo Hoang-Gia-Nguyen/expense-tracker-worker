@@ -120,7 +120,6 @@ export function createExpenseTrackerApp(domElements) {
             }
         });
     }
-
     function renderBurndownChart(data) {
         const [year, month] = monthPicker.value.split('-');
         const daysInMonth = new Date(year, month, 0).getDate();
@@ -627,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
         budgetedSummaryDiv: document.getElementById('budgeted-summary'),
         otherSpendingSummaryDiv: document.getElementById('other-spending-summary'),
         chartCanvas: document.getElementById('expense-chart'),
+        burndownCanvas: document.getElementById('burndown-chart'),
         deleteConfirmModal: new bootstrap.Modal(document.getElementById('delete-confirm-modal')),
         deleteModalBody: document.getElementById('delete-modal-body'),
         confirmDeleteBtn: document.getElementById('confirm-delete-btn'),

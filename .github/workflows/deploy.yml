@@ -1,15 +1,12 @@
 name: Deploy to Production
 
 on:
-  pull_request:
+  push:
     branches:
       - release
-    types:
-      - closed
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

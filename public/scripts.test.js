@@ -298,6 +298,9 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     });
     const burnArgs = chartFactory.mock.calls[1];
     expect(burnArgs[1]).toMatchObject({ type: 'line' });
+    const actualData = burnArgs[1].data.datasets[0].data;
+    expect(actualData[8]).toBeGreaterThan(0); // day 9 has spending
+    expect(actualData[9]).toBeNull(); // day 10 not yet occurred
 
     cleanup();
   });

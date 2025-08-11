@@ -13,7 +13,6 @@ jobs:
         with:
           node-version: 18
       - uses: browser-actions/setup-chrome@v1
-      - uses: browser-actions/setup-chromedriver@v1
       - run: npm ci
       - run: npm install --no-save selenium-webdriver
       - run: npm test

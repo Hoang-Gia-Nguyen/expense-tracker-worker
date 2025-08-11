@@ -138,10 +138,18 @@ export function createExpenseTrackerApp(domElements) {
         });
 
         const actual = [];
+        const currentYear = String(today.getFullYear());
+        const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+        const currentDay = today.getDate();
+        const isCurrentMonth = year === currentYear && month === currentMonth;
         let running = 0;
         for (let i = 0; i < daysInMonth; i++) {
             running += dailyTotals[i];
-            actual.push(running);
+            if (isCurrentMonth && i >= currentDay) {
+                actual.push(null);
+            } else {
+                actual.push(running);
+            }
         }
 
         const expected = [];

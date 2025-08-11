@@ -69,3 +69,16 @@
     border-color: #d39e00;
 }
 
+/* Responsive chart containers prioritize mobile view */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 40vh;
+}
+
+@media (min-width: 768px) {
+    .chart-container {
+        width: 45%;
+    }
+}
+

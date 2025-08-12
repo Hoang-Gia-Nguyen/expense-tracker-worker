@@ -1,5 +1,7 @@
 import { beforeAll, afterAll, describe, it, expect } from 'vitest';
 import path from 'node:path';
+import http from 'node:http';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -23,25 +25,86 @@ try {
 
 beforeAll(async () => {
   if (!seleniumAvailable) return;
+
   const { Builder } = webdriver;
   const options = new chrome.Options();
   options.addArguments('--headless', '--no-sandbox', '--disable-dev-shm-usage');
 
-  try {
-    driver = await Promise.race([
-      new Builder().forBrowser('chrome').setChromeOptions(options).build(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Selenium unavailable')), 5000)
-      ),
-    ]);
-  } catch (err) {
-    seleniumAvailable = false;
-  }
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const publicDir = path.resolve(__dirname, 'public');
+
+  server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const serveFile = (filePath, contentType) => {
+      fs.readFile(path.join(publicDir, filePath), (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end();
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+      });
+    };
+
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
+      serveFile('index.html', 'text/html');
+    } else if (req.method === 'GET' && url.pathname === '/scripts.js') {
+      serveFile('scripts.js', 'application/javascript');
+    } else if (req.method === 'GET' && url.pathname === '/styles.css') {
+      serveFile('styles.css', 'text/css');
+    } else if (url.pathname === '/api/expense') {
+      if (req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(expenses));
+      } else if (req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => (body += chunk));
+        req.on('end', () => {
+          let data;
+          try {
+            data = JSON.parse(body || '{}');
+          } catch (e) {
+            res.writeHead(400);
+            res.end();
+            return;
+          }
+
+          const newExpense = {
+            rowid: expenses.length + 1,
+            Date: data.date,
+            Amount: data.amount,
+            Description: data.description,
+            Category: data.category,
+          };
+          expenses.push(newExpense);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(newExpense));
+        });
+      } else {
+        res.writeHead(405);
+        res.end();
+      }
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+
+  await new Promise(resolve => server.listen(0, resolve));
+  const port = server.address().port;
+  baseUrl = `http://localhost:${port}`;
+
+  driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 });
 
 afterAll(async () => {
   if (driver) {
     await driver.quit();
+  }
+  if (server) {
+    server.close();
   }
 });
 
@@ -55,6 +118,7 @@ describe('Expense Tracker UI (Selenium)', () => {
     const title = await driver.getTitle();
     expect(title).toBe('Expense Tracker');
   }, 30000);
+
 
   testFn('renders charts with seeded data', async () => {
     const __filename = fileURLToPath(import.meta.url);

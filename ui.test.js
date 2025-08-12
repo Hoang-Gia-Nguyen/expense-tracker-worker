@@ -158,4 +158,66 @@ describe('Expense Tracker UI (Selenium)', () => {
     expect(descriptionText).toBe('Test expense');
     expect(categoryText).toBe('Food');
   }, 30000);
+
+  testFn('renders pie chart with correct data', async () => {
+    expenses.length = 0;
+    expenses.push(
+      { rowid: 1, Date: '2000-01-05', Amount: 100000, Description: 'Groceries', Category: 'Food' },
+      { rowid: 2, Date: '2000-01-10', Amount: 200000, Description: 'Taxi', Category: 'Transportation' }
+    );
+
+    await driver.get(baseUrl + '/index.html');
+
+    await driver.wait(
+      async () => await driver.executeScript("return !!Chart.getChart('expense-chart');"),
+      10000
+    );
+
+    const labels = await driver.executeScript(
+      "return Chart.getChart('expense-chart').data.labels;"
+    );
+    const data = await driver.executeScript(
+      "return Chart.getChart('expense-chart').data.datasets[0].data;"
+    );
+
+    expect(labels).toEqual(['Food', 'Transportation']);
+    expect(data[0]).toBe(100000);
+    expect(data[1]).toBe(200000);
+  }, 30000);
+
+  testFn('renders burndown chart with cumulative totals', async () => {
+    expenses.length = 0;
+    expenses.push(
+      { rowid: 1, Date: '2000-01-01', Amount: 100000, Description: 'Groceries', Category: 'Food' },
+      { rowid: 2, Date: '2000-01-10', Amount: 200000, Description: 'Taxi', Category: 'Transportation' }
+    );
+
+    await driver.get(baseUrl + '/index.html');
+    await driver.executeScript(
+      "const mp=document.getElementById('month-picker'); mp.value='2000-01'; mp.dispatchEvent(new Event('change'));"
+    );
+
+    await driver.wait(
+      async () => await driver.executeScript("return !!Chart.getChart('burndown-chart');"),
+      10000
+    );
+
+    const actual = await driver.executeScript(
+      "return Chart.getChart('burndown-chart').data.datasets[0].data;"
+    );
+    const expected = await driver.executeScript(
+      "return Chart.getChart('burndown-chart').data.datasets[1].data;"
+    );
+
+    expect(actual.length).toBe(31);
+    expect(actual[0]).toBe(100000);
+    expect(actual[9]).toBe(300000);
+    expect(actual[30]).toBe(300000);
+
+    const dailyBudget = 9500000;
+    const dailyRate = dailyBudget / 31;
+    expect(expected.length).toBe(31);
+    expect(expected[0]).toBeCloseTo(dailyRate, 0);
+    expect(expected[30]).toBeCloseTo(dailyBudget, 0);
+  }, 30000);
 });

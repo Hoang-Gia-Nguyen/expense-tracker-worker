@@ -81,40 +81,43 @@ describe('Expense Tracker UI (Selenium)', () => {
         throw new Error('Unknown fetch URL');
       };
 
-      import(scriptUrl).then(mod => {
-        window.testApp = mod.createExpenseTrackerApp({
-          expenseForm: document.getElementById('expense-form'),
-          expenseList: document.getElementById('expense-list'),
-          dateInput: document.getElementById('date'),
-          amountInput: document.getElementById('amount'),
-          descriptionInput: document.getElementById('description'),
-          categoryInput: document.getElementById('category'),
-          addExpenseBtn: document.getElementById('add-expense-btn'),
-          monthPicker: document.getElementById('month-picker'),
-          categoryFilter: document.getElementById('category-filter'),
-          totalSummaryDiv: document.getElementById('total-summary'),
-          dailySpendingSummaryDiv: document.getElementById('daily-spending-summary'),
-          startOfMonthSummaryDiv: document.getElementById('start-of-month-summary'),
-          budgetedSummaryDiv: document.getElementById('budgeted-summary'),
-          otherSpendingSummaryDiv: document.getElementById('other-spending-summary'),
-          chartCanvas: document.getElementById('expense-chart'),
-          burndownCanvas: document.getElementById('burndown-chart'),
-          deleteConfirmModal: { show: () => {}, hide: () => {} },
-          deleteModalBody: document.getElementById('delete-modal-body'),
-          confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
-          deleteAmountInput: document.getElementById('delete-amount-input'),
-          deleteWarning: document.getElementById('delete-warning'),
-          modifyExpenseModal: { show: () => {}, hide: () => {} },
-          modifyExpenseForm: document.getElementById('modify-expense-form'),
-          modifyExpenseIdInput: document.getElementById('modify-expense-id'),
-          modifyDateInput: document.getElementById('modify-date'),
-          modifyAmountInput: document.getElementById('modify-amount'),
-          modifyDescriptionInput: document.getElementById('modify-description'),
-          modifyCategoryInput: document.getElementById('modify-category'),
-          confirmModifyBtn: document.getElementById('confirm-modify-btn')
-        });
-        done();
-      });
+      const dynamicImport = new Function('u', 'return import(u)');
+      dynamicImport(scriptUrl)
+        .then(mod => {
+          window.testApp = mod.createExpenseTrackerApp({
+            expenseForm: document.getElementById('expense-form'),
+            expenseList: document.getElementById('expense-list'),
+            dateInput: document.getElementById('date'),
+            amountInput: document.getElementById('amount'),
+            descriptionInput: document.getElementById('description'),
+            categoryInput: document.getElementById('category'),
+            addExpenseBtn: document.getElementById('add-expense-btn'),
+            monthPicker: document.getElementById('month-picker'),
+            categoryFilter: document.getElementById('category-filter'),
+            totalSummaryDiv: document.getElementById('total-summary'),
+            dailySpendingSummaryDiv: document.getElementById('daily-spending-summary'),
+            startOfMonthSummaryDiv: document.getElementById('start-of-month-summary'),
+            budgetedSummaryDiv: document.getElementById('budgeted-summary'),
+            otherSpendingSummaryDiv: document.getElementById('other-spending-summary'),
+            chartCanvas: document.getElementById('expense-chart'),
+            burndownCanvas: document.getElementById('burndown-chart'),
+            deleteConfirmModal: { show: () => {}, hide: () => {} },
+            deleteModalBody: document.getElementById('delete-modal-body'),
+            confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
+            deleteAmountInput: document.getElementById('delete-amount-input'),
+            deleteWarning: document.getElementById('delete-warning'),
+            modifyExpenseModal: { show: () => {}, hide: () => {} },
+            modifyExpenseForm: document.getElementById('modify-expense-form'),
+            modifyExpenseIdInput: document.getElementById('modify-expense-id'),
+            modifyDateInput: document.getElementById('modify-date'),
+            modifyAmountInput: document.getElementById('modify-amount'),
+            modifyDescriptionInput: document.getElementById('modify-description'),
+            modifyCategoryInput: document.getElementById('modify-category'),
+            confirmModifyBtn: document.getElementById('confirm-modify-btn')
+          });
+          done();
+        })
+        .catch(err => done(err.message));
     }, scriptUrl, sampleData);
 
     await driver.executeScript(() => {

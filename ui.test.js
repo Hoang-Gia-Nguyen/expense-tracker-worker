@@ -113,7 +113,51 @@ describe('Expense Tracker UI (Selenium)', () => {
   const testFn = seleniumAvailable ? it : it.skip;
 
   testFn('renders page title', async () => {
+  testFn('submits new expense and displays it', async () => {
+    const { By, until } = webdriver;
+    const TEST_DATE = '2024-01-01';
+    const TEST_AMOUNT = '100000';
+    const TEST_DESCRIPTION = 'Test expense';
+    const TEST_CATEGORY = 'Food';
+
     await driver.get(baseUrl + '/index.html');
+
+    await driver.wait(until.elementLocated(By.id('expense-form')), 5000);
+
+    const date = await driver.findElement(By.id('date'));
+    await date.clear();
+    await date.sendKeys(TEST_DATE);
+
+    const amount = await driver.findElement(By.id('amount'));
+    await amount.clear();
+    await amount.sendKeys(TEST_AMOUNT);
+
+    const description = await driver.findElement(By.id('description'));
+    await description.clear();
+    await description.sendKeys(TEST_DESCRIPTION);
+
+    const category = await driver.findElement(By.id('category'));
+    await category.sendKeys(TEST_CATEGORY);
+
+    const submitBtn = await driver.findElement(By.id('add-expense-btn'));
+    await driver.wait(until.elementIsEnabled(submitBtn), 5000);
+    await submitBtn.click();
+
+    const row = await driver.wait(
+      until.elementLocated(By.xpath(`//tr[td[contains(text(),'${TEST_DESCRIPTION}')]]`)),
+      5000
+    );
+
+    const cells = await row.findElements(By.css('td'));
+    const amountText = await cells[0].getText();
+    const descriptionText = await cells[1].getText();
+    const categoryText = await cells[2].getText();
+
+    const numericAmount = parseInt(amountText.replace(/[^0-9]/g, ''));
+    expect(numericAmount).toBe(parseInt(TEST_AMOUNT));
+    expect(descriptionText).toBe(TEST_DESCRIPTION);
+    expect(categoryText).toBe(TEST_CATEGORY);
+  }, 30000);
     const title = await driver.getTitle();
     expect(title).toBe('Expense Tracker');
   }, 30000);

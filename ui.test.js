@@ -77,6 +77,10 @@ beforeAll(async () => {
           } catch {
             res.writeHead(400);
             res.end();
+          } catch (e) {
+            console.error('Error parsing expense data:', e);
+            res.writeHead(400);
+            res.end();
           }
         });
       } else {

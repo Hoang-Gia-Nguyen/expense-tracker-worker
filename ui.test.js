@@ -26,7 +26,17 @@ beforeAll(async () => {
   const { Builder } = webdriver;
   const options = new chrome.Options();
   options.addArguments('--headless', '--no-sandbox', '--disable-dev-shm-usage');
-  driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+
+  try {
+    driver = await Promise.race([
+      new Builder().forBrowser('chrome').setChromeOptions(options).build(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Selenium unavailable')), 5000)
+      ),
+    ]);
+  } catch (err) {
+    seleniumAvailable = false;
+  }
 });
 
 afterAll(async () => {

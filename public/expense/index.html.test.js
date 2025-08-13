@@ -38,14 +38,19 @@ describe('index.html structure', () => {
   it('links the stylesheet and module script', () => {
     const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
       .map(l => l.getAttribute('href'));
-    expect(styleLinks).toContain('styles.css');
+    expect(styleLinks).toContain('/styles.css');
 
-    const script = document.querySelector('script[type="module"][src="scripts.js"]');
+    const script = document.querySelector('script[type="module"][src="/scripts.js"]');
     expect(script).not.toBeNull();
   });
 
   it('includes canvases for expense and burndown charts', () => {
     expect(document.getElementById('expense-chart')).not.toBeNull();
     expect(document.getElementById('burndown-chart')).not.toBeNull();
+  });
+
+  it('renders navigation links for other pages', () => {
+    const navLinks = Array.from(document.querySelectorAll('nav .nav-link')).map(a => a.getAttribute('href'));
+    expect(navLinks).toEqual(['/expense', '/summary', '/insights']);
   });
 });

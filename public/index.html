@@ -25,7 +25,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="amount" class="form-label">Amount (in ₫)</label>
-                            <input type="text" inputmode="numeric" class="form-control" id="amount" placeholder="Enter amount" required>
+                            <input type="text" inputmode="decimal" class="form-control" id="amount" placeholder="Enter amount" required>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -147,7 +147,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="modify-amount" class="form-label">Amount (in ₫)</label>
-                            <input type="text" inputmode="numeric" class="form-control" id="modify-amount" required>
+                            <input type="text" inputmode="decimal" class="form-control" id="modify-amount" required>
                         </div>
                         <div class="mb-3">
                             <label for="modify-description" class="form-label">Description</label>
@@ -190,7 +190,7 @@
                 </div>
                 <div class="mb-3 px-3">
                     <label for="delete-amount-input" class="form-label">To confirm, please enter the exact amount of the expense:</label>
-                    <input type="text" inputmode="numeric" class="form-control" id="delete-amount-input" placeholder="e.g., 30.000">
+                    <input type="text" inputmode="decimal" class="form-control" id="delete-amount-input" placeholder="e.g., 30.000">
                     <div id="delete-warning" class="text-danger mt-2" style="display: none;">The amount entered is incorrect.</div>
                 </div>
                 <div class="modal-footer">

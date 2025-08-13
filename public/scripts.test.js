@@ -347,6 +347,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     expect(amount.value).toBe('1.234.567');
 
+    amount.value = '-1234';
+    amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    expect(amount.value).toBe('-1.234');
+
     cleanup();
   });
 
@@ -382,6 +386,36 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     form.dispatchEvent(new document.defaultView.Event('submit', { bubbles: true, cancelable: true }));
     // The button is re-enabled in the finally block of addExpense, so we don't check disabled here
     expect(cat.classList.contains('is-invalid')).toBe(true);
+
+    cleanup();
+  });
+
+  it('marks amount invalid when empty or only a minus sign', async () => {
+    const { document, app, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => [] },
+    });
+
+    const date = document.getElementById('date');
+    const amount = document.getElementById('amount');
+    const desc = document.getElementById('description');
+    const cat = document.getElementById('category');
+
+    date.value = '2025-08-09';
+    desc.value = 'Test';
+    cat.value = 'Food';
+
+    // Empty amount
+    amount.value = '';
+    let valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
+
+    // Just a minus sign
+    amount.classList.remove('is-invalid');
+    amount.value = '-';
+    valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
 
     cleanup();
   });
@@ -436,10 +470,12 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     cleanup();
   });
 
-  it('opens modify modal, pre-fills fields formatted, PUTs update and hides modal', async () => {
+  it('updates an expense via modal and refreshes list with success message', async () => {
     const { document, fetchMock, showSpy, hideSpy, cleanup } = await bootApp({
       initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
     });
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Modify" button
     const firstModify = document.querySelector('#expense-list .btn.btn-info.btn-sm');
@@ -450,21 +486,25 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // Fields populated
     const id = document.getElementById('modify-expense-id').value;
-    const date = document.getElementById('modify-date').value;
-    const amount = document.getElementById('modify-amount').value;
-    const desc = document.getElementById('modify-description').value;
-    const cat = document.getElementById('modify-category').value;
-
     const target = SAMPLE_EXPENSES.find(e => String(e.rowid) === id);
-    expect(date).toBe(target.Date);
-    expect(amount).toBe('3.000.000');
-    expect(desc).toBe(target.Description);
-    expect(cat).toBe(target.Category);
+    expect(document.getElementById('modify-date').value).toBe(target.Date);
+    expect(document.getElementById('modify-amount').value).toBe('3.000.000');
+    expect(document.getElementById('modify-description').value).toBe(target.Description);
+    expect(document.getElementById('modify-category').value).toBe(target.Category);
 
-    // Prepare PUT response and subsequent refresh GET
+    // Change fields
+    const newDesc = 'Updated Lunch';
+    const newAmount = 4000000;
+    document.getElementById('modify-description').value = newDesc;
+    document.getElementById('modify-amount').value = '4.000.000';
+
+    // Prepare PUT response and subsequent refresh GET with updated data
+    const UPDATED_EXPENSES = SAMPLE_EXPENSES.map(e =>
+      e.rowid === Number(id) ? { ...e, Amount: newAmount, Description: newDesc } : e
+    );
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // PUT
-      .mockResolvedValueOnce({ ok: true, json: async () => SAMPLE_EXPENSES }); // Refresh GET
+      .mockResolvedValueOnce({ ok: true, json: async () => UPDATED_EXPENSES }); // Refresh GET
 
     // Confirm modify
     document.getElementById('confirm-modify-btn')
@@ -479,21 +519,29 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(putBody).toMatchObject({
       id: Number(id),
       date: target.Date,
-      description: target.Description,
+      description: newDesc,
       category: target.Category,
+      amount: newAmount,
     });
-    expect(putBody.amount).toBe(target.Amount);
 
-    // Modal hidden after PUT flow
+    // List reflects updated values
+    const listText = textContent(document.getElementById('expense-list'));
+    expect(listText).toContain(newDesc);
+    expect(listText).toContain('4.000.000');
+
+    // Success message logged and modal hidden
+    expect(logSpy).toHaveBeenCalledWith('Expense updated successfully!');
     expect(hideSpy).toHaveBeenCalled();
 
     cleanup();
   });
 
-  it('opens delete modal, validates amount, enables confirm, DELETEs and hides modal', async () => {
+  it('deletes an expense after confirmation and refreshes list with success log', async () => {
     const { document, fetchMock, showSpy, hideSpy, cleanup } = await bootApp({
       initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
     });
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Delete" button
     const firstDelete = document.querySelector('#expense-list .btn.btn-danger.btn-sm');
@@ -531,10 +579,11 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(warning.style.display).toBe('none');
     expect(input.classList.contains('is-invalid')).toBe(false);
 
-    // Prepare DELETE ok and subsequent refresh GET
+    // Prepare DELETE ok and subsequent refresh GET without the deleted expense
+    const UPDATED_EXPENSES = SAMPLE_EXPENSES.filter(e => e.rowid !== Number(firstId));
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // DELETE
-      .mockResolvedValueOnce({ ok: true, json: async () => SAMPLE_EXPENSES }); // GET refresh
+      .mockResolvedValueOnce({ ok: true, json: async () => UPDATED_EXPENSES }); // GET refresh
 
     // Confirm delete
     confirmBtn.dispatchEvent(new document.defaultView.MouseEvent('click', { bubbles: true }));
@@ -547,6 +596,11 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const deleteBody = JSON.parse(deleteCall[1].body);
     expect(deleteBody).toMatchObject({ id: String(target.rowid) });
 
+    // List no longer contains deleted description
+    const listText = textContent(document.getElementById('expense-list'));
+    expect(listText).not.toContain(target.Description);
+
+    expect(logSpy).toHaveBeenCalledWith('Expense deleted successfully!');
     expect(hideSpy).toHaveBeenCalled();
 
     cleanup();

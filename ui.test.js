@@ -48,8 +48,15 @@ beforeAll(async () => {
       });
     };
 
-    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-      serveFile('index.html', 'text/html');
+    if (req.method === 'GET' && url.pathname === '/') {
+      res.writeHead(302, { Location: '/expense' });
+      res.end();
+    } else if (req.method === 'GET' && (url.pathname === '/expense' || url.pathname === '/expense/index.html')) {
+      serveFile('expense/index.html', 'text/html');
+    } else if (req.method === 'GET' && (url.pathname === '/summary' || url.pathname === '/summary/index.html')) {
+      serveFile('summary/index.html', 'text/html');
+    } else if (req.method === 'GET' && (url.pathname === '/insights' || url.pathname === '/insights/index.html')) {
+      serveFile('insights/index.html', 'text/html');
     } else if (req.method === 'GET' && url.pathname === '/scripts.js') {
       serveFile('scripts.js', 'application/javascript');
     } else if (req.method === 'GET' && url.pathname === '/styles.css') {
@@ -112,7 +119,7 @@ describe('Expense Tracker UI (Selenium)', () => {
   const testFn = seleniumAvailable ? it : it.skip;
 
   testFn('renders page title', async () => {
-    await driver.get(baseUrl + '/index.html');
+    await driver.get(baseUrl + '/expense/index.html');
     const title = await driver.getTitle();
     expect(title).toBe('Expense Tracker');
   }, 30000);
@@ -120,7 +127,7 @@ describe('Expense Tracker UI (Selenium)', () => {
   testFn('submits new expense and displays it', async () => {
     const { By, until } = webdriver;
 
-    await driver.get(baseUrl + '/index.html');
+    await driver.get(baseUrl + '/expense/index.html');
 
     await driver.wait(until.elementLocated(By.id('expense-form')), 5000);
 
@@ -166,7 +173,7 @@ describe('Expense Tracker UI (Selenium)', () => {
       { rowid: 2, Date: '2000-01-10', Amount: 200000, Description: 'Taxi', Category: 'Transportation' }
     );
 
-    await driver.get(baseUrl + '/index.html');
+    await driver.get(baseUrl + '/expense/index.html');
 
     await driver.wait(
       async () => await driver.executeScript("return !!Chart.getChart('expense-chart');"),
@@ -192,7 +199,7 @@ describe('Expense Tracker UI (Selenium)', () => {
       { rowid: 2, Date: '2000-01-10', Amount: 200000, Description: 'Taxi', Category: 'Transportation' }
     );
 
-    await driver.get(baseUrl + '/index.html');
+    await driver.get(baseUrl + '/expense/index.html');
     await driver.executeScript(
       "const mp=document.getElementById('month-picker'); mp.value='2000-01'; mp.dispatchEvent(new Event('change'));"
     );

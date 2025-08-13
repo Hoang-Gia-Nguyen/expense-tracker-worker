@@ -43,10 +43,22 @@ router.get('*', async (request, env, context) => {
         return undefined;
     }
 
+    if (url.pathname === '/') {
+        return Response.redirect(`${url.origin}/expense`, 302);
+    }
+
+    let assetRequest = request;
+    const rewrites = ['/expense', '/summary', '/insights'];
+    if (rewrites.includes(url.pathname)) {
+        const newUrl = new URL(url);
+        newUrl.pathname = `${url.pathname}/index.html`;
+        assetRequest = new Request(newUrl.toString(), request);
+    }
+
     try {
         return await getAssetFromKV(
             {
-                request,
+                request: assetRequest,
                 // use waitUntil from context when available (Cloudflare Workers),
                 // fall back to env.waitUntil for tests or other environments
                 waitUntil: context?.waitUntil || env.waitUntil,

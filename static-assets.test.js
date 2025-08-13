@@ -16,7 +16,7 @@ describe('static asset handling', () => {
     const mockResponse = new Response('asset', { status: 200 });
     getAssetFromKV.mockResolvedValueOnce(mockResponse);
 
-    const request = new Request('http://localhost/index.html', { method: 'GET' });
+    const request = new Request('http://localhost/expense/index.html', { method: 'GET' });
     const env = {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},
@@ -45,6 +45,21 @@ describe('static asset handling', () => {
     await worker.fetch(request, env);
 
     // getAssetFromKV should not be called for API routes
+    expect(getAssetFromKV).not.toHaveBeenCalled();
+  });
+
+  it('redirects root requests to /expense', async () => {
+    const request = new Request('http://localhost/', { method: 'GET' });
+    const env = {
+      __STATIC_CONTENT: {},
+      __STATIC_CONTENT_MANIFEST: {},
+      waitUntil: vi.fn(),
+    };
+
+    const response = await worker.fetch(request, env);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('http://localhost/expense');
     expect(getAssetFromKV).not.toHaveBeenCalled();
   });
 });

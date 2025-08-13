@@ -347,6 +347,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     expect(amount.value).toBe('1.234.567');
 
+    amount.value = '-1234';
+    amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    expect(amount.value).toBe('-1.234');
+
     cleanup();
   });
 

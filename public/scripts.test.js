@@ -390,6 +390,36 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     cleanup();
   });
 
+  it('marks amount invalid when empty or only a minus sign', async () => {
+    const { document, app, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => [] },
+    });
+
+    const date = document.getElementById('date');
+    const amount = document.getElementById('amount');
+    const desc = document.getElementById('description');
+    const cat = document.getElementById('category');
+
+    date.value = '2025-08-09';
+    desc.value = 'Test';
+    cat.value = 'Food';
+
+    // Empty amount
+    amount.value = '';
+    let valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
+
+    // Just a minus sign
+    amount.classList.remove('is-invalid');
+    amount.value = '-';
+    valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
+
+    cleanup();
+  });
+
   it('adds an expense (POST), refreshes list (GET), and resets form date', async () => {
     const { document, fetchMock, cleanup } = await bootApp({
       initialGet: { ok: true, json: async () => [] },

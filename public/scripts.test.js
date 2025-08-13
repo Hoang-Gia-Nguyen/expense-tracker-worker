@@ -347,6 +347,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     expect(amount.value).toBe('1.234.567');
 
+    amount.value = '-1234';
+    amount.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    expect(amount.value).toBe('-1.234');
+
     cleanup();
   });
 
@@ -382,6 +386,36 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     form.dispatchEvent(new document.defaultView.Event('submit', { bubbles: true, cancelable: true }));
     // The button is re-enabled in the finally block of addExpense, so we don't check disabled here
     expect(cat.classList.contains('is-invalid')).toBe(true);
+
+    cleanup();
+  });
+
+  it('marks amount invalid when empty or only a minus sign', async () => {
+    const { document, app, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => [] },
+    });
+
+    const date = document.getElementById('date');
+    const amount = document.getElementById('amount');
+    const desc = document.getElementById('description');
+    const cat = document.getElementById('category');
+
+    date.value = '2025-08-09';
+    desc.value = 'Test';
+    cat.value = 'Food';
+
+    // Empty amount
+    amount.value = '';
+    let valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
+
+    // Just a minus sign
+    amount.classList.remove('is-invalid');
+    amount.value = '-';
+    valid = app.validateAndHighlight();
+    expect(valid).toBe(false);
+    expect(amount.classList.contains('is-invalid')).toBe(true);
 
     cleanup();
   });

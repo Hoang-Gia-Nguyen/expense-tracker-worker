@@ -25,7 +25,13 @@ const startOfMonthCategories = ['Home', 'Baby'];
 export function createExpenseTrackerApp(domElements) {
     // Moved inside to ensure correct scope
     function formatNumber(value) {
-        return value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const isNegative = value.startsWith('-');
+        const digits = value.replace(/\D/g, '');
+        const formattedDigits = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (isNegative) {
+            return digits ? `-${formattedDigits}` : '-';
+        }
+        return formattedDigits;
     }
 
     // Moved inside to ensure correct scope
@@ -60,16 +66,18 @@ export function createExpenseTrackerApp(domElements) {
     });
 
     function checkFormValidity() {
-        const fields = [dateInput, amountInput, descriptionInput, categoryInput];
-        const allFieldsFilled = fields.every(field => field.value.trim() !== '');
+        const amountValue = amountInput.value.replace(/\./g, '');
+        const isAmountValid = amountValue !== '' && amountValue !== '-';
+        const otherFields = [dateInput, descriptionInput, categoryInput];
+        const allFieldsFilled = otherFields.every(field => field.value.trim() !== '') && isAmountValid;
         addExpenseBtn.disabled = !allFieldsFilled;
     }
 
     function validateAndHighlight() {
-        const fields = [dateInput, amountInput, descriptionInput, categoryInput];
+        const otherFields = [dateInput, descriptionInput, categoryInput];
         let allValid = true;
 
-        fields.forEach(field => {
+        otherFields.forEach(field => {
             if (!field.value.trim()) {
                 allValid = false;
                 field.classList.add('is-invalid');
@@ -77,6 +85,14 @@ export function createExpenseTrackerApp(domElements) {
                 field.classList.remove('is-invalid');
             }
         });
+
+        const amountValue = amountInput.value.replace(/\./g, '');
+        if (amountValue === '' || amountValue === '-') {
+            allValid = false;
+            amountInput.classList.add('is-invalid');
+        } else {
+            amountInput.classList.remove('is-invalid');
+        }
 
         return allValid;
     }
@@ -575,7 +591,12 @@ export function createExpenseTrackerApp(domElements) {
     [dateInput, amountInput, descriptionInput, categoryInput].forEach(input => {
         input.addEventListener('input', () => {
             checkFormValidity();
-            if (input.value.trim() !== '') {
+            if (input === amountInput) {
+                const val = amountInput.value.replace(/\./g, '');
+                if (val !== '' && val !== '-') {
+                    amountInput.classList.remove('is-invalid');
+                }
+            } else if (input.value.trim() !== '') {
                 input.classList.remove('is-invalid');
             }
         });

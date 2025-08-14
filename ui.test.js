@@ -44,10 +44,12 @@ describe('Expense Tracker UI', () => {
     expect(hrefs).toEqual(['/expense', '/summary', '/insights']);
   });
 
-  it('renders summary placeholder', async () => {
+  it('renders summary layout', async () => {
     await loadPage('summary');
     const heading = await driver.findElement(By.css('h1')).getText();
     expect(heading.toLowerCase()).toContain('summary');
+    await driver.findElement(By.id('month-picker'));
+    await driver.findElement(By.id('summary-chart'));
   });
 
   it('renders insights placeholder', async () => {

@@ -27,7 +27,7 @@ jobs:
       run: npm install
 
     - name: Run Vitest and collect coverage
-      run: npm test -- --coverage # Assumes your "test" script in package.json runs vitest
+      run: vitest --config vitest.ci.config.js --coverage # Assumes your "test" script in package.json runs vitest
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

@@ -39,7 +39,7 @@ router.options('*', (request) => {
 router.get('*', async (request, env, context) => {
     // Skip asset handling for API routes
     const url = new URL(request.url);
-    if (url.pathname.startsWith('/api/expense')) {
+    if (url.pathname.startsWith('/api/expense') || url.pathname.startsWith('/api/summary')) {
         return undefined;
     }
 
@@ -99,6 +99,35 @@ router.get('/api/expense', async (request, env) => {
         });
     } catch (error) {
         console.error('Error fetching expenses:', error);
+        return new Response(`An error occurred: ${error.message}`, { status: 500, headers: corsHeaders });
+    }
+});
+
+// Handle GET summary requests
+router.get('/api/summary', async (request, env) => {
+    const origin = request.headers.get('Origin');
+    const corsHeaders = getCorsHeaders(origin);
+    try {
+        const url = new URL(request.url);
+        const year = url.searchParams.get('year');
+        const month = url.searchParams.get('month');
+
+        if (!year || !month) {
+            return new Response('Missing required query parameters: year, month', { status: 400, headers: corsHeaders });
+        }
+
+        const db = env.D1_DATABASE;
+        const stmt = db.prepare(
+            'SELECT category, spend_vnd FROM v_monthly_category_spend WHERE year_month = ?'
+        );
+        const { results } = await stmt.bind(`${year}-${month.padStart(2, '0')}`).all();
+
+        return new Response(JSON.stringify(results), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+        });
+    } catch (error) {
+        console.error('Error fetching summary:', error);
         return new Response(`An error occurred: ${error.message}`, { status: 500, headers: corsHeaders });
     }
 });

@@ -143,6 +143,38 @@ describe('GET /api/expense', () => {
     });
 });
 
+describe('GET /api/summary', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockAll.mockResolvedValue({ results: [] });
+    });
+
+    it('returns monthly category spend', async () => {
+        const mockSummary = [
+            { category: 'Food', spend_vnd: 1000 },
+            { category: 'Home', spend_vnd: 2000 },
+        ];
+        mockAll.mockResolvedValueOnce({ results: mockSummary });
+
+        const request = createMockRequest('http://localhost/api/summary?year=2023&month=01', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toEqual(mockSummary);
+        expect(mockPrepare).toHaveBeenCalledWith('SELECT category, spend_vnd FROM v_monthly_category_spend WHERE year_month = ?');
+        expect(mockBind).toHaveBeenCalledWith('2023-01');
+    });
+
+    it('returns 400 for missing params', async () => {
+        const request = createMockRequest('http://localhost/api/summary?year=2023', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
+    });
+});
+
 // Test for static asset serving (basic check)
 describe('Static Asset Serving', () => {
     it('should return 404 for non-existent asset after fall-through', async () => {

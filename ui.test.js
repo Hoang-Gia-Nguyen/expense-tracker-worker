@@ -1,36 +1,58 @@
-import { describe, it, expect } from 'vitest';
-import { JSDOM } from 'jsdom';
-import fs from 'node:fs';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Builder, By } from 'selenium-webdriver';
+import chrome from 'selenium-webdriver/chrome';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-function loadPage(page) {
-  const file = fs.readFileSync(path.join(__dirname, 'public', page, 'index.html'), 'utf-8');
-  return new JSDOM(file);
+let driver;
+
+async function loadPage(page) {
+  const filePath = path.join(__dirname, 'public', page, 'index.html');
+  const url = pathToFileURL(filePath).href;
+  await driver.get(url);
 }
 
+beforeAll(async () => {
+  const options = new chrome.Options();
+  options.addArguments('--headless', '--no-sandbox', '--disable-dev-shm-usage');
+  driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+});
+
+afterAll(async () => {
+  if (driver) {
+    await driver.quit();
+  }
+});
+
 describe('Expense Tracker UI', () => {
-  it('renders expense page title', () => {
-    const { window } = loadPage('expense');
-    expect(window.document.title).toBe('Expense Tracker');
+  it('renders expense page title', async () => {
+    await loadPage('expense');
+    const title = await driver.getTitle();
+    expect(title).toBe('Expense Tracker');
   });
 
-  it('has navbar links to all pages', () => {
-    const { window } = loadPage('expense');
-    const links = Array.from(window.document.querySelectorAll('nav a'))
-      .map(a => a.getAttribute('href'))
-      .filter(href => href !== '#');
-    expect(links).toEqual(['/expense', '/summary', '/insights']);
+  it('has navbar links to all pages', async () => {
+    await loadPage('expense');
+    const links = await driver.findElements(By.css('nav a[href]'));
+    const hrefs = [];
+    for (const link of links) {
+      const href = await link.getAttribute('href');
+      if (!href.endsWith('#')) {
+        hrefs.push(new URL(href).pathname);
+      }
+    }
+    expect(hrefs).toEqual(['/expense', '/summary', '/insights']);
   });
 
-  it('renders summary placeholder', () => {
-    const { window } = loadPage('summary');
-    const heading = window.document.querySelector('h1');
-    expect(heading.textContent).toMatch(/summary/i);
+  it('renders summary placeholder', async () => {
+    await loadPage('summary');
+    const heading = await driver.findElement(By.css('h1')).getText();
+    expect(heading.toLowerCase()).toContain('summary');
   });
 
-  it('renders insights placeholder', () => {
-    const { window } = loadPage('insights');
-    const heading = window.document.querySelector('h1');
-    expect(heading.textContent).toMatch(/insights/i);
+  it('renders insights placeholder', async () => {
+    await loadPage('insights');
+    const heading = await driver.findElement(By.css('h1')).getText();
+    expect(heading.toLowerCase()).toContain('insights');
   });
 });

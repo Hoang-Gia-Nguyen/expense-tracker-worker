@@ -22,10 +22,14 @@ describe('Expense Tracker UI', () => {
     expect(links).toEqual(['/expense', '/summary', '/insights']);
   });
 
-  it('renders summary placeholder', () => {
+  it('renders summary layout', () => {
     const { window } = loadPage('summary');
     const heading = window.document.querySelector('h1');
+    const monthPicker = window.document.getElementById('month-picker');
+    const canvas = window.document.getElementById('summary-chart');
     expect(heading.textContent).toMatch(/summary/i);
+    expect(monthPicker).not.toBeNull();
+    expect(canvas).not.toBeNull();
   });
 
   it('renders insights placeholder', () => {

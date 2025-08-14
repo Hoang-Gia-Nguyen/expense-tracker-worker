@@ -100,6 +100,42 @@ paths:
         '204':
           description: No content, CORS headers are sent.
 
+  /api/summary:
+    get:
+      summary: Get monthly spending by category
+      description: Returns total spending for each category for a given month.
+      parameters:
+        - name: year
+          in: query
+          required: true
+          description: The year to filter summary by (e.g., 2025).
+          schema:
+            type: string
+        - name: month
+          in: query
+          required: true
+          description: The month to filter summary by (e.g., 07 for July).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Spending totals by category for the specified period.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    spend_vnd:
+                      type: number
+        '400':
+          description: Bad request, likely due to missing query parameters.
+        '500':
+          description: Internal server error.
+
 components:
   schemas:
     Expense:

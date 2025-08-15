@@ -4,6 +4,7 @@ package-lock.json
 
 # Cloudflare Wrangler build and temporary files
 .wrangler/
+schema-and-data.sql
 
 # macOS specific files
 .DS_Store

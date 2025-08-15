@@ -39,12 +39,34 @@ describe('static asset handling', () => {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},
       waitUntil: vi.fn(),
-      D1_DATABASE: { prepare: vi.fn() },
+      D1_DATABASE: {
+        prepare: vi.fn(() => ({
+          bind: () => ({ all: vi.fn().mockResolvedValue({ results: [] }) })
+        }))
+      },
     };
 
     await worker.fetch(request, env);
 
     // getAssetFromKV should not be called for API routes
+    expect(getAssetFromKV).not.toHaveBeenCalled();
+  });
+
+  it('ignores /api/summary routes when serving assets', async () => {
+    const request = new Request('http://localhost/api/summary?year=2023&month=01');
+    const env = {
+      __STATIC_CONTENT: {},
+      __STATIC_CONTENT_MANIFEST: {},
+      waitUntil: vi.fn(),
+      D1_DATABASE: {
+        prepare: vi.fn(() => ({
+          bind: () => ({ all: vi.fn().mockResolvedValue({ results: [] }) })
+        }))
+      },
+    };
+
+    await worker.fetch(request, env);
+
     expect(getAssetFromKV).not.toHaveBeenCalled();
   });
 

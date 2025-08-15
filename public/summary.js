@@ -15,7 +15,7 @@ export function createSummaryApp(dom) {
         const now = new Date();
         const months = [];
         const requests = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = 6; i >= 1; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');

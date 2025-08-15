@@ -12,7 +12,7 @@ function buildHTML() {
 describe('summary.js', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-06-15T00:00:00Z'));
+    vi.setSystemTime(new Date('2024-08-15T00:00:00Z'));
   });
 
   it('fetches last 6 months and renders charts', async () => {
@@ -44,12 +44,12 @@ describe('summary.js', () => {
     expect(fetchMock).toHaveBeenCalledTimes(6);
     const urls = fetchMock.mock.calls.map(call => call[0]);
     expect(urls).toEqual([
-      '/api/summary?year=2024&month=01',
       '/api/summary?year=2024&month=02',
       '/api/summary?year=2024&month=03',
       '/api/summary?year=2024&month=04',
       '/api/summary?year=2024&month=05',
-      '/api/summary?year=2024&month=06'
+      '/api/summary?year=2024&month=06',
+      '/api/summary?year=2024&month=07'
     ]);
     expect(chartFactory).toHaveBeenCalledTimes(5);
     expect(domElements.categoryChartsDiv.querySelectorAll('canvas').length).toBe(4);

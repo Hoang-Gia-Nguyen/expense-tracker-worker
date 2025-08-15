@@ -22,6 +22,9 @@ const mockEnv = {
     __STATIC_CONTENT: {}, // Mock for KV asset handler
     __STATIC_CONTENT_MANIFEST: {}, // Mock for KV asset handler
     waitUntil: vi.fn(), // Mock waitUntil for getAssetFromKV
+    ANALYTICS_TEST: {
+        writeDataPoint: vi.fn(),
+    },
 };
 
 // Helper function to create a mock Request

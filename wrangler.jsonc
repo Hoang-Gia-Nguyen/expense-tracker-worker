@@ -1,0 +1,5 @@
+{
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS_TEST", "dataset": "ANALYTICS_TEST" }
+  ]
+}

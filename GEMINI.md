@@ -16,3 +16,4 @@ This setup allows seamless interaction between the user-facing interface and the
 
 # Working style
 - Do not modify GEMINI.md
+- Always run npm test to verify change.

@@ -19,6 +19,12 @@
           "database_name": "mony",
           "database_id": "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
         }
+      ],
+      "analytics_engine_datasets": [
+        {
+          "binding": "ANALYTICS_TEST",
+          "dataset": "ANALYTICS_TEST"
+        }
       ]
     },
     "development": {
@@ -30,11 +36,5 @@
         }
       ]
     }
-  },
-  "analytics_engine_datasets": [
-    {
-      "binding": "ANALYTICS_TEST",
-      "dataset": "ANALYTICS_TEST"
-    }
-  ]
+  }
 }

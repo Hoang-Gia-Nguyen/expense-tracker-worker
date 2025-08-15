@@ -48,8 +48,8 @@ describe('Expense Tracker UI', () => {
     await loadPage('summary');
     const heading = await driver.findElement(By.css('h1')).getText();
     expect(heading.toLowerCase()).toContain('summary');
-    await driver.findElement(By.id('month-picker'));
-    await driver.findElement(By.id('summary-chart'));
+    await driver.findElement(By.id('total-chart'));
+    await driver.findElement(By.id('category-charts'));
   });
 
   it('renders insights placeholder', async () => {

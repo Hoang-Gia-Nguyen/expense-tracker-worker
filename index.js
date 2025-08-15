@@ -153,6 +153,13 @@ router.post('/api/expense', async (request, env) => {
         );
         await stmt.bind(date, amount, description, category).run();
 
+        // Send data to Analytics Engine
+        env.ANALYTICS_TEST.writeDataPoint({
+            blobs: [description, category],
+            doubles: [amount],
+            indexes: [Date.parse(date)], // Using timestamp as an index
+        });
+
         return new Response('Expense added successfully', { status: 201, headers: corsHeaders });
     } catch (error) {
         console.error('Error processing request:', error);

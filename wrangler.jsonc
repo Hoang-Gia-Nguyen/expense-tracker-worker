@@ -1,5 +1,40 @@
 {
+  "name": "expense-tracker",
+  "main": "index.js",
+  "compatibility_date": "2025-07-27",
+  "assets": {
+    "directory": "./public/"
+  },
+  "env": {
+    "production": {
+      "routes": [
+        {
+          "pattern": "expensetracker.hgnlab.org",
+          "custom_domain": true
+        }
+      ],
+      "d1_databases": [
+        {
+          "binding": "D1_DATABASE",
+          "database_name": "mony",
+          "database_id": "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
+        }
+      ]
+    },
+    "development": {
+      "d1_databases": [
+        {
+          "binding": "D1_DATABASE",
+          "database_name": "mony-development-db",
+          "database_id": "ea700681-91ef-4825-bbe4-7ee90f9519be"
+        }
+      ]
+    }
+  },
   "analytics_engine_datasets": [
-    { "binding": "ANALYTICS_TEST", "dataset": "ANALYTICS_TEST" }
+    {
+      "binding": "ANALYTICS_TEST",
+      "dataset": "ANALYTICS_TEST"
+    }
   ]
 }

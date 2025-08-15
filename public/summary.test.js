@@ -53,5 +53,6 @@ describe('summary.js', () => {
     ]);
     expect(chartFactory).toHaveBeenCalledTimes(5);
     expect(domElements.categoryChartsDiv.querySelectorAll('canvas').length).toBe(4);
+    expect(domElements.categoryChartsDiv.querySelectorAll('.chart-container').length).toBe(4);
   });
 });

@@ -43,8 +43,14 @@ export function createSummaryApp(dom) {
         categoryChartsDiv.innerHTML = '';
 
         dailyCategories.forEach(cat => {
+            const col = document.createElement('div');
+            col.className = 'col-12 col-md-6';
+            const container = document.createElement('div');
+            container.className = 'chart-container';
             const canvas = document.createElement('canvas');
-            categoryChartsDiv.appendChild(canvas);
+            container.appendChild(canvas);
+            col.appendChild(container);
+            categoryChartsDiv.appendChild(col);
             const chart = new Chart(canvas, {
                 type: 'line',
                 data: {

@@ -115,6 +115,7 @@ jobs:
         if: |-
           ${{ github.event_name == 'issue_comment' }}
         env:
+          GEMINI_MODEL: gemini-2.5-flash
           GITHUB_TOKEN: '${{ steps.generate_token.outputs.token || secrets.GITHUB_TOKEN }}'
           COMMENT_BODY: '${{ github.event.comment.body }}'
           PR_NUMBER: '${{ github.event.issue.number }}'

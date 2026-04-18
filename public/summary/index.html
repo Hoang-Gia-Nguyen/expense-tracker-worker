@@ -20,14 +20,60 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-5">
-        <h1 class="mb-4 text-center">Summary</h1>
-        <div class="d-flex justify-content-center mb-4">
-            <div class="chart-container" style="max-width:600px;width:100%;height:300px;">
-                <canvas id="total-chart"></canvas>
+    <div class="container mt-4">
+        <h1 class="mb-4 text-center">Financial Summary</h1>
+
+        <!-- Key Metrics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm text-center p-3">
+                    <div class="text-muted small">Total Spend (This Month)</div>
+                    <h3 id="metric-total-current">-</h3>
+                    <div id="metric-change" class="small">-</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm text-center p-3">
+                    <div class="text-muted small">Top Category</div>
+                    <h3 id="metric-top-category">-</h3>
+                    <div id="metric-top-value" class="small">-</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm text-center p-3">
+                    <div class="text-muted small">Avg. Monthly Spend</div>
+                    <h3 id="metric-avg">-</h3>
+                    <div class="small text-muted">(Last 6 Months)</div>
+                </div>
             </div>
         </div>
-        <div id="category-charts" class="row gy-4"></div>
+
+        <div class="row gy-4">
+            <!-- Main Stacked Area Chart -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Spending Trends</h5>
+                        <div class="chart-container" style="position: relative; height:400px; width:100%">
+                            <canvas id="trends-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Current Month Breakdown -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Category Breakdown (Current)</h5>
+                        <div class="chart-container" style="position: relative; height:400px; width:100%">
+                            <canvas id="breakdown-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="category-charts" class="row gy-4 d-none"></div> <!-- Hidden, kept for compatibility -->
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

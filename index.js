@@ -83,16 +83,19 @@ router.get('*', async (request, env, context) => {
 
 // Handle GET requests
 router.get('/api/expense', async (request, env) => {
+    const start = Date.now(); // latency start
     const db = env.D1_DATABASE;
-    // Ensure indexes exist (idempotent) – safe for mock DB
-    const _idx1 = db.prepare('CREATE INDEX IF NOT EXISTS idx_expense_date ON expense(Date);');
-    if (typeof _idx1.run === 'function') await _idx1.run();
-    const _idx2 = db.prepare('CREATE INDEX IF NOT EXISTS idx_expense_date_amount ON expense(Date, Amount);');
-    if (typeof _idx2.run === 'function') await _idx2.run();
-    const _idx3 = db.prepare('CREATE INDEX IF NOT EXISTS idx_monthly_cat ON v_monthly_category_spend(category, year_month);');
-    if (typeof _idx3.run === 'function') await _idx3.run();
-    const _idx4 = db.prepare('CREATE INDEX IF NOT EXISTS idx_monthly_ym ON v_monthly_category_spend(year_month);');
-    if (typeof _idx4.run === 'function') await _idx4.run();
+    // Ensure indexes exist (idempotent) – safe for mock DB; wrap in try to avoid breaking request
+    try {
+        const _idx1 = db.prepare('CREATE INDEX IF NOT EXISTS idx_expense_date ON expense(Date);');
+        if (typeof _idx1.run === 'function') await _idx1.run();
+        const _idx2 = db.prepare('CREATE INDEX IF NOT EXISTS idx_expense_date_amount ON expense(Date, Amount);');
+        if (typeof _idx2.run === 'function') await _idx2.run();
+        // Indexes on views are not allowed in D1; removed idx_monthly_cat and idx_monthly_ym.
+        // If needed, consider materializing these aggregations in a table.
+    } catch (e) {
+        console.error('Index creation error:', e);
+    }
     const origin = request.headers.get('Origin');
     const corsHeaders = getCorsHeaders(origin);
     try {
@@ -101,6 +104,12 @@ router.get('/api/expense', async (request, env) => {
         const month = url.searchParams.get('month');
 
         if (!year || !month) {
+            const ms = Date.now() - start;
+            env.LOGGING_HABIT.writeDataPoint({
+                blobs: ['db_latency', 'expense', 'bad_params'],
+                doubles: [ms],
+                indexes: [Date.now()],
+            });
             return new Response(JSON.stringify({ error: 'Missing required query parameters: year, month' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
@@ -113,12 +122,23 @@ router.get('/api/expense', async (request, env) => {
             "SELECT rowid, Date, Amount, Description, Category FROM expense WHERE Date >= ? AND Date < ?"
         );
         const { results } = await stmt.bind(startDate, endDate).all();
-
+        const ms = Date.now() - start;
+        env.LOGGING_HABIT.writeDataPoint({
+            blobs: ['db_latency', 'expense'],
+            doubles: [ms],
+            indexes: [Date.now()],
+        });
         return new Response(JSON.stringify(results), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
         });
     } catch (error) {
+        const ms = Date.now() - start;
+        env.LOGGING_HABIT.writeDataPoint({
+            blobs: ['db_error', 'expense'],
+            doubles: [ms],
+            indexes: [Date.now()],
+        });
         console.error('Error fetching expenses:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

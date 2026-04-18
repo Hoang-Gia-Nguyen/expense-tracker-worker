@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { createSummaryApp } from './summary.js';
+import { createSummaryApp } from './summary/summary.js';
 
 function buildHTML() {
   return `

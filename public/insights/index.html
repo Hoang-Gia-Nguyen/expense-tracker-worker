@@ -2,28 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insights - Expense Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/styles.css">
     <link rel="icon" type="image/png" href="/favico.png">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="#">Expense Tracker</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/expense">Expense</a>
-                <a class="nav-link" href="/summary">Summary</a>
-                <a class="nav-link active" aria-current="page" href="/insights">Insights</a>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="#">Expense Tracker</a>
+        <div class="navbar-nav">
+            <a class="nav-link" href="/expense">Expense</a>
+            <a class="nav-link" href="/summary">Summary</a>
+            <a class="nav-link active" href="/insights">Insights</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <h2 class="mb-4 text-center">Spending Insights</h2>
+
+    <!-- 30-day chart -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5>
+                <i class="bi bi-graph-up-arrow text-danger"></i>
+                Daily Spending (Last 30 Days)
+            </h5>
+            <canvas id="dailyChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <!-- Daily Spikes -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5>
+                        <i class="bi bi-exclamation-circle text-danger"></i>
+                        Daily Spikes
+                    </h5>
+                    <div id="dailySpikes"></div>
+                </div>
             </div>
         </div>
-    </nav>
-    <div class="container mt-5">
-        <h1 class="mb-4 text-center">Insights</h1>
-        <p class="text-center">Insights content goes here.</p>
+
+        <!-- Category Spikes -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5>
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        Category Alerts
+                    </h5>
+                    <div id="categorySpikes"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Top 5 -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5>
+                <i class="bi bi-cash-stack"></i>
+                Top 5 Transactions (This Month)
+            </h5>
+
+            <table class="table table-sm">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="text-end">Amount</th>
+                </tr>
+                </thead>
+                <tbody id="topTransactions"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="/insights/insights.js"></script>
 </body>
 </html>

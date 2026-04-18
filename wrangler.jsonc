@@ -7,12 +7,6 @@
   },
   "env": {
     "production": {
-      "routes": [
-        {
-          "pattern": "expensetracker.hgnlab.org",
-          "custom_domain": true
-        }
-      ],
       "d1_databases": [
         {
           "binding": "D1_DATABASE",
@@ -22,10 +16,25 @@
       ],
       "analytics_engine_datasets": [
         {
-          "binding": "ANALYTICS_TEST",
-          "dataset": "ANALYTICS_TEST"
+          "binding": "LOGGING_HABIT",
+          "dataset": "logging_habit"
         }
-      ]
+      ],
+      "observability": {
+        "enabled": false,
+        "head_sampling_rate": 1,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true,
+          "invocation_logs": true
+        },
+        "traces": {
+          "enabled": false,
+          "persist": true,
+          "head_sampling_rate": 1
+        }
+      }
     },
     "development": {
       "d1_databases": [
@@ -33,6 +42,12 @@
           "binding": "D1_DATABASE",
           "database_name": "mony-development-db",
           "database_id": "ea700681-91ef-4825-bbe4-7ee90f9519be"
+        }
+      ],
+      "analytics_engine_datasets": [
+        {
+          "binding": "LOGGING_HABIT",
+          "dataset": "logging_habit_test"
         }
       ]
     }

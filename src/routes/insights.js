@@ -1,7 +1,15 @@
 import { Router } from 'itty-router';
-import { getCorsHeaders } from '../../middleware/cors';
 import { errorHandlerMiddleware } from '../../middleware/errorHandler';
 import { CORS_ALLOWED_ORIGINS } from '../../config';
+import { z } from 'zod'; // Import z from Zod
+
+// Import schemas for API responses
+import {
+    ApiExpenseSchema,
+    GetExpensesResponseSchema,
+    SummarySchema,
+    InsightsResponseSchema,
+} from '../../sharedTypes';
 
 const insightsRouter = Router();
 
@@ -21,6 +29,11 @@ const getHeaders = (request) => {
 insightsRouter.get('/api/insights', async (request, env, context) => {
     const headers = getHeaders(request);
     try {
+        // Basic check for D1_DATABASE binding
+        if (!env.D1_DATABASE) {
+            throw new Error('D1_DATABASE not configured');
+        }
+
         const db = env.D1_DATABASE;
 
         // ===== 1. Last 30 days daily totals =====
@@ -31,7 +44,6 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
             GROUP BY Date
             ORDER BY Date
         `);
-
         const { results: dailyResults } = await dailyStmt.all();
 
         // fill missing days
@@ -75,9 +87,7 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
             FROM v_monthly_category_spend
             WHERE year_month = ?
         `);
-
-        const { results: currentCategories } =
-            await categoryStmt.bind(currentMonthYear).all();
+        const { results: currentCategories } = await categoryStmt.bind(currentMonthYear).all();
 
         const categorySpikes = [];
 
@@ -90,10 +100,7 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
                 ORDER BY year_month DESC
                 LIMIT 6
             `);
-
-            const { results } =
-                await avgStmt.bind(row.category, currentMonthYear).all();
-
+            const { results } = await avgStmt.bind(row.category, currentMonthYear).all();
             const avg = results[0]?.avg_spend || 0;
 
             if (avg > 0 && row.spend_vnd > avg * 1.5) {
@@ -113,17 +120,21 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
             ORDER BY Amount DESC
             LIMIT 5
         `);
+        const { results: topTransactions } = await topStmt.bind(currentMonthYear).all();
 
-        const { results: topTransactions } =
-            await topStmt.bind(currentMonthYear).all();
-
-        return new Response(JSON.stringify({
+        const insightsData = {
             dailySeries,
             dailySpikes,
             categorySpikes,
             topTransactions
-        }), {
-            headers: { ...headers, 'Content-Type': 'application/json' }
+        };
+
+        // Validate the fetched data against the InsightsResponseSchema
+        InsightsResponseSchema.parse(insightsData);
+
+        return new Response(JSON.stringify(insightsData), {
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            status: 200,
         });
 
     } catch (error) {

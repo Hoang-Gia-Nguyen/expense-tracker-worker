@@ -82,11 +82,12 @@ expensesRouter.post('/api/expense', async (request, env, context) => {
         );
         await stmt.bind(date, amount, description, category).run();
 
+        // Enhanced observability: Log more details to Analytics Engine
         if (env.ANALYTICS_TEST) {
              env.ANALYTICS_TEST.writeDataPoint({
-                blobs: [description, category],
-                doubles: [amount],
-                indexes: [Date.parse(date)],
+                blobs: [description, category, "expense_created"], // Log action and associated strings
+                doubles: [amount], // Log the amount
+                indexes: [Date.parse(date)], // Log the timestamp
             });
         } else {
             console.warn('ANALYTICS_TEST binding not found. Skipping writeDataPoint.');

@@ -4,7 +4,9 @@ info:
   description: API for managing personal expenses, designed for Cloudflare Workers.
   version: 1.0.0
 servers:
-  - url: mony-worker.hgnguyen37.workers.dev
+  - url: /api
+    description: Local development server
+  - url: https://mony-worker.hgnguyen37.workers.dev
     description: Production server
 paths:
   /api/expense:
@@ -18,12 +20,14 @@ paths:
           description: The year to filter expenses by (e.g., 2025).
           schema:
             type: string
+            pattern: "^\d{4}$"
         - name: month
           in: query
           required: true
           description: The month to filter expenses by (e.g., 07 for July).
           schema:
             type: string
+            pattern: "^\d{2}$"
       responses:
         '200':
           description: A list of expenses for the specified period.
@@ -34,7 +38,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Expense'
         '400':
-          description: Bad request, likely due to missing query parameters.
+          description: Bad request, likely due to missing or invalid query parameters.
         '500':
           description: Internal server error.
     post:
@@ -50,7 +54,7 @@ paths:
         '201':
           description: Expense added successfully.
         '400':
-          description: Bad request, check the request body.
+          description: Bad request, check the request body for missing fields or invalid data.
         '500':
           description: Internal server error.
     put:
@@ -66,7 +70,7 @@ paths:
         '200':
           description: Expense updated successfully.
         '400':
-          description: Bad request, check the request body.
+          description: Bad request, check the request body for missing fields or invalid data.
         '500':
           description: Internal server error.
     delete:
@@ -103,7 +107,7 @@ paths:
   /api/summary:
     get:
       summary: Get monthly spending by category
-      description: Returns total spending for each category for a given month.
+      description: Returns total spending for each category for a given month and year.
       parameters:
         - name: year
           in: query
@@ -111,12 +115,14 @@ paths:
           description: The year to filter summary by (e.g., 2025).
           schema:
             type: string
+            pattern: "^\d{4}$"
         - name: month
           in: query
           required: true
           description: The month to filter summary by (e.g., 07 for July).
           schema:
             type: string
+            pattern: "^\d{2}$"
       responses:
         '200':
           description: Spending totals by category for the specified period.
@@ -132,7 +138,59 @@ paths:
                     spend_vnd:
                       type: number
         '400':
-          description: Bad request, likely due to missing query parameters.
+          description: Bad request, likely due to missing or invalid query parameters.
+        '500':
+          description: Internal server error.
+
+  /api/insights:
+    get:
+      summary: Get financial insights and analytics
+      description: Provides insights such as daily spending trends, category spikes, and top transactions.
+      responses:
+        '200':
+          description: Financial insights data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightsResponse'
+        '500':
+          description: Internal server error.
+
+  /api/config:
+    get:
+      summary: Get frontend configuration
+      description: Returns configuration settings (e.g., budgets, categories) for the frontend application.
+      responses:
+        '200':
+          description: Frontend configuration data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiUrl:
+                    type: string
+                  monthlyBudget:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  totalBudget:
+                    type: integer
+                  categoryConfig:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        color:
+                          type: string
+                  categoryOrder:
+                    type: array
+                    items:
+                      type: string
+                  startOfMonthCategories:
+                    type: array
+                    items:
+                      type: string
         '500':
           description: Internal server error.
 
@@ -146,8 +204,8 @@ components:
           description: The unique identifier for the expense.
         Date:
           type: string
-          format: date
-          description: The date of the expense (YYYY-MM-DD).
+          format: date-time
+          description: The date and time of the expense (ISO 8601 format).
         Amount:
           type: number
           description: The amount of the expense.
@@ -203,3 +261,43 @@ components:
         - amount
         - description
         - category
+    InsightsResponse:
+      type: object
+      properties:
+        dailySeries:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              total:
+                type: number
+        dailySpikes:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              total:
+                type: number
+              multiplier:
+                type: number
+        categorySpikes:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              current:
+                type: number
+              percentIncrease:
+                type: number
+        topTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'

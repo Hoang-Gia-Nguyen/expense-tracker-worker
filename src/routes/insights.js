@@ -1,6 +1,6 @@
 import { Router } from 'itty-router';
-import { errorHandlerMiddleware } from '../../middleware/errorHandler';
-import { CORS_ALLOWED_ORIGINS } from '../../config';
+import { errorHandlerMiddleware } from '../middleware/errorHandler';
+import { CORS_ALLOWED_ORIGINS } from '../config';
 import { z } from 'zod'; // Import z from Zod
 
 // Import schemas for API responses
@@ -9,7 +9,7 @@ import {
     GetExpensesResponseSchema,
     SummarySchema,
     InsightsResponseSchema,
-} from '../../sharedTypes';
+} from '../sharedTypes';
 
 const insightsRouter = Router();
 
@@ -120,7 +120,14 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
             ORDER BY Amount DESC
             LIMIT 5
         `);
-        const { results: topTransactions } = await topStmt.bind(currentMonthYear).all();
+        const { results: topTransactionsResults } = await topStmt.bind(currentMonthYear).all();
+        const topTransactions = topTransactionsResults.map(row => ({
+            rowid: row.rowid,
+            date: row.Date,
+            amount: row.Amount,
+            description: row.Description,
+            category: row.Category
+        }));
 
         const insightsData = {
             dailySeries,

@@ -145,11 +145,11 @@ export function createExpenseTrackerApp(domElements) {
 
         const dailyTotals = Array(daysInMonth).fill(0);
         data.forEach(expense => {
-            const date = new Date(expense.Date);
+            const date = new Date(expense.date);
             const expMonth = String(date.getMonth() + 1).padStart(2, '0');
             const expYear = String(date.getFullYear());
-            if (expYear === year && expMonth === month && dailySpendingCategories.includes(expense.Category)) {
-                dailyTotals[date.getDate() - 1] += expense.Amount;
+            if (expYear === year && expMonth === month && dailySpendingCategories.includes(expense.category)) {
+                dailyTotals[date.getDate() - 1] += expense.amount;
             }
         });
 
@@ -215,8 +215,8 @@ export function createExpenseTrackerApp(domElements) {
 
     function renderSummaries(data) {
         const summary = data.reduce((acc, expense) => {
-            const category = expense.Category;
-            const amount = expense.Amount;
+            const category = expense.category;
+            const amount = expense.amount;
             if (!acc[category]) {
                 acc[category] = 0;
             }
@@ -353,11 +353,11 @@ export function createExpenseTrackerApp(domElements) {
         expenseList.innerHTML = '';
 
         // Sort expenses by date in descending order
-        data.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+        data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         // Group expenses by date
         const groupedExpenses = data.reduce((acc, expense) => {
-            const date = expense.Date;
+            const date = expense.date;
             if (!acc[date]) {
                 acc[date] = [];
             }
@@ -377,9 +377,9 @@ export function createExpenseTrackerApp(domElements) {
             groupedExpenses[date].forEach((expense) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.Amount)}</td>
-                    <td>${expense.Description}</td>
-                    <td>${expense.Category}</td>
+                    <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
+                    <td>${expense.description}</td>
+                    <td>${expense.category}</td>
                     <td class="actions-cell">
                         <button class="btn btn-info btn-sm" data-id="${expense.rowid}">Modify</button>
                         <button class="btn btn-danger btn-sm" data-id="${expense.rowid}">Delete</button>
@@ -396,7 +396,7 @@ export function createExpenseTrackerApp(domElements) {
         if (selectedCategory === 'All') {
             renderExpenses(allExpensesForMonth);
         } else {
-            const filteredExpenses = allExpensesForMonth.filter(expense => expense.Category === selectedCategory);
+            const filteredExpenses = allExpensesForMonth.filter(expense => expense.category === selectedCategory);
             renderExpenses(filteredExpenses);
         }
     }
@@ -475,10 +475,10 @@ export function createExpenseTrackerApp(domElements) {
 
         if (expenseToModify) {
             modifyExpenseIdInput.value = expenseToModify.rowid;
-            modifyDateInput.value = expenseToModify.Date;
-            modifyAmountInput.value = formatNumber(expenseToModify.Amount.toString());
-            modifyDescriptionInput.value = expenseToModify.Description;
-            modifyCategoryInput.value = expenseToModify.Category;
+            modifyDateInput.value = expenseToModify.date;
+            modifyAmountInput.value = formatNumber(expenseToModify.amount.toString());
+            modifyDescriptionInput.value = expenseToModify.description;
+            modifyCategoryInput.value = expenseToModify.category;
             modifyExpenseModal.show();
         }
     }
@@ -523,9 +523,9 @@ export function createExpenseTrackerApp(domElements) {
 
         if (expenseToDelete) {
             // Set modal content and store data
-            deleteModalBody.textContent = `You are attempting to delete the expense for '${expenseToDelete.Description}' from ${expenseToDelete.Date}.`;
+            deleteModalBody.textContent = `You are attempting to delete the expense for '${expenseToDelete.description}' from ${expenseToDelete.date}.`;
             confirmDeleteBtn.dataset.id = expenseId;
-            confirmDeleteBtn.dataset.amount = expenseToDelete.Amount;
+            confirmDeleteBtn.dataset.amount = expenseToDelete.amount;
 
             // Reset form state
             deleteAmountInput.value = '';

@@ -1,13 +1,13 @@
 import { Router } from 'itty-router';
-import { errorHandlerMiddleware } from '../../middleware/errorHandler';
-import { CORS_ALLOWED_ORIGINS } from '../../config';
+import { errorHandlerMiddleware } from '../middleware/errorHandler';
+import { CORS_ALLOWED_ORIGINS } from '../config';
 import {
     NewExpenseInputSchema,
     UpdateExpenseInputSchema,
     DeleteExpenseInputSchema,
     ApiExpenseSchema,
     GetExpensesResponseSchema,
-} from '../../sharedTypes'; // Import Zod schemas
+} from '../sharedTypes'; // Import Zod schemas
 
 const expensesRouter = Router();
 
@@ -57,10 +57,19 @@ expensesRouter.get('/api/expense', async (request, env, context) => {
         );
         const { results } = await stmt.bind(year, month.padStart(2, '0')).all();
 
-        // Validate the results against the expected API response schema
-        GetExpensesResponseSchema.parse(results); // This will throw if results are not as expected
+        // Normalize results to match lowercase schema
+        const normalizedResults = results.map(row => ({
+            rowid: row.rowid,
+            date: row.Date,
+            amount: row.Amount,
+            description: row.Description,
+            category: row.Category
+        }));
 
-        return new Response(JSON.stringify(results), {
+        // Validate the results against the expected API response schema
+        GetExpensesResponseSchema.parse(normalizedResults);
+
+        return new Response(JSON.stringify(normalizedResults), {
             headers: { ...headers, 'Content-Type': 'application/json' },
             status: 200,
         });

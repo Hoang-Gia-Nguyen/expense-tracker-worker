@@ -2,21 +2,17 @@ import { z } from 'zod';
 
 // Schema for an Expense record in the database
 export const ExpenseSchema = z.object({
-    Date: z.string().datetime({ message: "Date must be a valid ISO 8601 string" }),
-    Amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }),
-    Description: z.string().min(1, { message: "Description cannot be empty" }),
-    Category: z.string().min(1, { message: "Category cannot be empty" }),
+    date: z.string().datetime({ message: "Date must be a valid ISO 8601 string" }),
+    amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }),
+    description: z.string().min(1, { message: "Description cannot be empty" }),
+    category: z.string().min(1, { message: "Category cannot be empty" }),
 });
 
 // Type inferred from ExpenseSchema
 export type Expense = z.infer<typeof ExpenseSchema>;
 
-// Schema for adding a new expense (similar to ExpenseSchema but Date might be optional if set by server)
-export const NewExpenseInputSchema = ExpenseSchema.omit({ Date: true }).extend({
-    // For API, date might be provided, but let's assume the server might default it or reformat.
-    // For now, let's make Date required here to match frontend submission.
-    Date: z.string().datetime({ message: "Date must be a valid ISO 8601 string" }),
-});
+// Schema for adding a new expense
+export const NewExpenseInputSchema = ExpenseSchema;
 
 // Type for new expense input
 export type NewExpenseInput = z.infer<typeof NewExpenseInputSchema>;

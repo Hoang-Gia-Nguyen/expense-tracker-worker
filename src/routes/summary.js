@@ -1,7 +1,8 @@
 import { Router } from 'itty-router';
-import { errorHandlerMiddleware } from '../../middleware/errorHandler';
-import { CORS_ALLOWED_ORIGINS } from '../../config';
-import { SummarySchema } from '../../sharedTypes'; // Import Zod schema
+import { errorHandlerMiddleware } from '../middleware/errorHandler';
+import { CORS_ALLOWED_ORIGINS } from '../config';
+import { SummarySchema } from '../sharedTypes'; // Import Zod schema
+import { z } from 'zod'; // Import z from Zod
 
 const summaryRouter = Router();
 

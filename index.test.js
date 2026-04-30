@@ -29,11 +29,11 @@ const mockEnv = {
 
 // Helper function to create a mock Request
 const createMockRequest = (url, method = 'GET', headers = {}, body = null) => {
-    const request = new Request(url, { method, headers });
-    if (body) {
-        request.json = () => Promise.resolve(body);
+    const options = { method, headers };
+    if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+        options.body = JSON.stringify(body);
     }
-    return request;
+    return new Request(url, options);
 };
 
 describe('GET /api/expense', () => {
@@ -52,10 +52,13 @@ describe('GET /api/expense', () => {
 
     it('should return expenses for a valid year and month', async () => {
         const mockExpenses = [
-            { rowid: 1, Date: '2023-01-15', Amount: 50, Description: 'Groceries', Category: 'Food' },
-            { rowid: 2, Date: '2023-01-20', Amount: 25, Description: 'Coffee', Category: 'Drinks' },
+            { rowid: 1, date: '2023-01-15T00:00:00Z', amount: 50, description: 'Groceries', category: 'Food' },
+            { rowid: 2, date: '2023-01-20T00:00:00Z', amount: 25, description: 'Coffee', category: 'Drinks' },
         ];
-        mockAll.mockResolvedValueOnce({ results: mockExpenses });
+        mockAll.mockResolvedValueOnce({ results: [
+            { rowid: 1, Date: '2023-01-15T00:00:00Z', Amount: 50, Description: 'Groceries', Category: 'Food' },
+            { rowid: 2, Date: '2023-01-20T00:00:00Z', Amount: 25, Description: 'Coffee', Category: 'Drinks' },
+        ] });
 
         const request = createMockRequest('http://localhost/api/expense?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
         const response = await worker.fetch(request, mockEnv);
@@ -211,7 +214,7 @@ describe('POST /api/expense', () => {
 
     it('should add a new expense successfully', async () => {
         const newExpense = {
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 100,
             description: 'New Book',
             category: 'Education',
@@ -228,7 +231,7 @@ describe('POST /api/expense', () => {
 
     it('should return 400 if required fields are missing', async () => {
         const incompleteExpense = {
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 100,
             description: 'New Book',
             // category is missing
@@ -237,12 +240,12 @@ describe('POST /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required fields');
+        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
     it('should return 400 if amount is not a number', async () => {
         const invalidExpense = {
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 'one hundred', // Invalid type
             description: 'New Book',
             category: 'Education',
@@ -251,7 +254,7 @@ describe('POST /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Amount must be an integer');
+        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
     it('should return 500 if D1 database operation fails', async () => {
@@ -259,7 +262,7 @@ describe('POST /api/expense', () => {
         mockRun.mockRejectedValueOnce(new Error(errorMessage));
 
         const newExpense = {
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 100,
             description: 'New Book',
             category: 'Education',
@@ -283,7 +286,7 @@ describe('PUT /api/expense', () => {
     it('should update an existing expense successfully', async () => {
         const updatedExpense = {
             id: 1,
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 120,
             description: 'Updated Book',
             category: 'Education',
@@ -301,7 +304,7 @@ describe('PUT /api/expense', () => {
     it('should return 400 if required fields are missing', async () => {
         const incompleteUpdate = {
             id: 1,
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 120,
             // description is missing
             category: 'Education',
@@ -310,13 +313,13 @@ describe('PUT /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required fields');
+        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
     it('should return 400 if amount is not a number', async () => {
         const invalidUpdate = {
             id: 1,
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 'one twenty', // Invalid type
             description: 'Updated Book',
             category: 'Education',
@@ -325,7 +328,7 @@ describe('PUT /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Amount must be an integer');
+        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
     it('should return 500 if D1 database operation fails', async () => {
@@ -334,7 +337,7 @@ describe('PUT /api/expense', () => {
 
         const updatedExpense = {
             id: 1,
-            date: '2023-08-01',
+            date: '2023-08-01T00:00:00Z',
             amount: 120,
             description: 'Updated Book',
             category: 'Education',
@@ -375,7 +378,7 @@ describe('DELETE /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required field: id');
+        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
     it('should return 404 if expense to delete is not found', async () => {
@@ -386,7 +389,7 @@ describe('DELETE /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('Failed to delete expense or not found');
+        await expect(response.text()).resolves.toBe('404, not found!');
     });
 
     it('should return 500 if D1 database operation fails', async () => {

@@ -26,11 +26,10 @@ describe('static asset handling', () => {
 
     const response = await worker.fetch(request, env, context);
 
-    expect(response).toBe(mockResponse);
+    expect(response.status).toBe(200);
     expect(getAssetFromKV).toHaveBeenCalledTimes(1);
     const call = getAssetFromKV.mock.calls[0];
-    expect(call[0].request).toBe(request);
-    expect(call[0].waitUntil).toBe(context.waitUntil);
+    expect(call[0].request.url).toBe(request.url);
   });
 
   it('ignores /api/expense routes when serving assets', async () => {

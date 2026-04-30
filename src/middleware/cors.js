@@ -2,13 +2,12 @@ import { CORS_ALLOWED_ORIGINS } from '../config'; // Assuming config will be cre
 
 export function corsMiddleware(request) {
     const origin = request.headers.get('Origin');
-    const headers = {
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-    };
+    const headers = {};
 
     if (CORS_ALLOWED_ORIGINS.includes(origin)) {
         headers['Access-Control-Allow-Origin'] = origin;
+        headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+        headers['Access-Control-Allow-Headers'] = 'Content-Type';
     } else {
         headers['Access-Control-Allow-Origin'] = 'null'; // Disallow other origins
     }
@@ -21,7 +20,7 @@ export function corsMiddleware(request) {
         });
     }
 
-    // Attach CORS headers to all successful responses
-    // This will be done by the errorHandler or route handlers themselves
-    return { headers };
+    // Do NOT return anything here if you want itty-router to continue
+    // to subsequent handlers. Returning an object will stop the router.
+    return undefined;
 }

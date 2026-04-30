@@ -202,12 +202,12 @@ function getAllRows(document) {
 
 /** ---------- Sample Data ---------- */
 const SAMPLE_EXPENSES = [
-  { rowid: 1, Date: '2025-08-09', Amount: 3000000, Description: 'Lunch', Category: 'Food' },
-  { rowid: 2, Date: '2025-08-08', Amount: 500000, Description: 'Bus', Category: 'Transportation' },
-  { rowid: 3, Date: '2025-08-09', Amount: 3000000, Description: 'Dinner', Category: 'Food' },
-  { rowid: 4, Date: '2025-08-09', Amount: 1200000, Description: 'Movie', Category: 'Entertainment' },
-  { rowid: 5, Date: '2025-08-08', Amount: 2200000, Description: 'Furniture', Category: 'Home' },
-  { rowid: 6, Date: '2025-08-09', Amount: 100000, Description: 'Random', Category: 'Other' },
+  { rowid: 1, date: '2025-08-09', amount: 3000000, description: 'Lunch', category: 'Food' },
+  { rowid: 2, date: '2025-08-08', amount: 500000, description: 'Bus', category: 'Transportation' },
+  { rowid: 3, date: '2025-08-09', amount: 3000000, description: 'Dinner', category: 'Food' },
+  { rowid: 4, date: '2025-08-09', amount: 1200000, description: 'Movie', category: 'Entertainment' },
+  { rowid: 5, date: '2025-08-08', amount: 2200000, description: 'Furniture', category: 'Home' },
+  { rowid: 6, date: '2025-08-09', amount: 100000, description: 'Random', category: 'Other' },
 ];
 
 /** ---------- Tests ---------- */
@@ -487,10 +487,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     // Fields populated
     const id = document.getElementById('modify-expense-id').value;
     const target = SAMPLE_EXPENSES.find(e => String(e.rowid) === id);
-    expect(document.getElementById('modify-date').value).toBe(target.Date);
+    expect(document.getElementById('modify-date').value).toBe(target.date);
     expect(document.getElementById('modify-amount').value).toBe('3.000.000');
-    expect(document.getElementById('modify-description').value).toBe(target.Description);
-    expect(document.getElementById('modify-category').value).toBe(target.Category);
+    expect(document.getElementById('modify-description').value).toBe(target.description);
+    expect(document.getElementById('modify-category').value).toBe(target.category);
 
     // Change fields
     const newDesc = 'Updated Lunch';
@@ -500,7 +500,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // Prepare PUT response and subsequent refresh GET with updated data
     const UPDATED_EXPENSES = SAMPLE_EXPENSES.map(e =>
-      e.rowid === Number(id) ? { ...e, Amount: newAmount, Description: newDesc } : e
+      e.rowid === Number(id) ? { ...e, amount: newAmount, description: newDesc } : e
     );
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // PUT
@@ -518,9 +518,9 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const putBody = JSON.parse(putCall[1].body);
     expect(putBody).toMatchObject({
       id: Number(id),
-      date: target.Date,
+      date: target.date,
       description: newDesc,
-      category: target.Category,
+      category: target.category,
       amount: newAmount,
     });
 
@@ -552,8 +552,8 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // Modal shown and text contains description/date
     expect(showSpy).toHaveBeenCalled();
-    expect(textContent(document.getElementById('delete-modal-body'))).toContain(target.Description);
-    expect(textContent(document.getElementById('delete-modal-body'))).toContain(target.Date);
+    expect(textContent(document.getElementById('delete-modal-body'))).toContain(target.description);
+    expect(textContent(document.getElementById('delete-modal-body'))).toContain(target.date);
 
     const confirmBtn = document.getElementById('confirm-delete-btn');
     const warning = document.getElementById('delete-warning');
@@ -571,7 +571,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(input.classList.contains('is-invalid')).toBe(true);
 
     // Correct amount (formatted) -> enabled, warning hidden, input valid
-    input.value = target.Amount.toLocaleString('vi-VN').replace(/\s?₫/g, '').replace(/,/g, '.'); // ex: "3.000.000"
+    input.value = target.amount.toLocaleString('vi-VN').replace(/\s?₫/g, '').replace(/,/g, '.'); // ex: "3.000.000"
     input.setSelectionRange(input.value.length, input.value.length);
     input.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
 
@@ -598,7 +598,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // List no longer contains deleted description
     const listText = textContent(document.getElementById('expense-list'));
-    expect(listText).not.toContain(target.Description);
+    expect(listText).not.toContain(target.description);
 
     expect(logSpy).toHaveBeenCalledWith('Expense deleted successfully!');
     expect(hideSpy).toHaveBeenCalled();
@@ -615,7 +615,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => [
-        { rowid: 99, Date: '2025-07-10', Amount: 100000, Description: 'Snack', Category: 'Food' },
+        { rowid: 99, date: '2025-07-10', amount: 100000, description: 'Snack', category: 'Food' },
       ],
     });
 

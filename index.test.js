@@ -290,6 +290,48 @@ describe('DELETE /api/expense', () => {
     });
 });
 
+describe('PATCH /api/expenses/category', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 3 } });
+    });
+
+    it('should reassign expenses from one category to another', async () => {
+        // Mock a successful PATCH that updates 3 rows
+        const mockStmt = {
+            bind: vi.fn().mockReturnValue({
+                run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 3 } })
+            })
+        };
+        mockPrepare.mockReturnValue(mockStmt);
+
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: 'OldCat', newCategory: 'Uncategorized' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.updated).toBe(3);
+        expect(body.message).toContain('OldCat');
+        expect(body.message).toContain('Uncategorized');
+        expect(mockPrepare).toHaveBeenCalledWith('UPDATE expense SET Category = ? WHERE Category = ?');
+    });
+
+    it('should return 400 for missing fields', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, {});
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
+    });
+
+    it('should return 400 for empty oldCategory', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: '', newCategory: 'Uncategorized' });
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
+    });
+});
+
 describe('Catch-all 404', () => {
     it('should return 404 for unmatched routes', async () => {
         const request = createMockRequest('http://localhost/non-existent-route', 'GET');

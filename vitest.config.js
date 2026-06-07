@@ -7,7 +7,7 @@ export default defineConfig({
     hookTimeout: 60000, // Increase hook timeout for UI tests
     coverage: {
       provider: 'v8',
-      include: ['public/scripts.js', 'index.js'], // Include scripts.js and index.js for coverage
+      include: ['public/scripts.js', 'public/settings.js', 'index.js'], // Include scripts.js and index.js for coverage
     },
   },
   server: {

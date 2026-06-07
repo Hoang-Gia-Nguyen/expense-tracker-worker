@@ -76,3 +76,43 @@
     height: 300px;
 }
 
+
+/* Settings Modal Styles */
+#settings-modal .modal-dialog {
+    max-width: 600px;
+}
+
+#settings-modal .settings-category-row {
+    transition: background-color 0.2s ease;
+}
+
+#settings-modal .settings-category-row:hover {
+    background-color: #f8f9fa;
+}
+
+#settings-modal .settings-category-row .form-control-color {
+    cursor: pointer;
+}
+
+#settings-modal .settings-category-row .form-control-color::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+#settings-modal .settings-category-row .form-control-color::-webkit-color-swatch {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+#settings-modal .btn-outline-danger.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+#settings-modal .nav-tabs .nav-link {
+    color: #495057;
+}
+
+#settings-modal .nav-tabs .nav-link.active {
+    font-weight: 600;
+    color: #0d6efd;
+}

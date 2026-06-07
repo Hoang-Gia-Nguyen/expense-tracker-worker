@@ -94,6 +94,12 @@
 </div>
 
 <div class="container mt-2 text-center" id="insightsLatency"></div>
+    <script type="module" src="/settings.js"></script>
+    <script type="module">
+        import { initSettings, openSettingsModal } from '/settings.js';
+        initSettings();
+        document.getElementById('settings-btn')?.addEventListener('click', openSettingsModal);
+    </script>
     <script src="/insights/insights.js"></script>
 </body>
 </html>

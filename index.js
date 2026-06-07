@@ -15,7 +15,7 @@ function getCorsHeaders(origin) {
     if (allowedOrigins.includes(origin)) {
         return {
             'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type',
         };
     }
@@ -383,6 +383,40 @@ router.get('/api/insights', async (request, env) => {
     }
 });
 
+
+// Handle PATCH requests for batch category reassignment
+router.patch('/api/expenses/category', async (request, env) => {
+    const origin = request.headers.get('Origin');
+    const corsHeaders = getCorsHeaders(origin);
+    try {
+        const body = await request.json();
+        const { oldCategory, newCategory } = body;
+
+        if (!oldCategory || !newCategory) {
+            return new Response(JSON.stringify({ error: 'Both oldCategory and newCategory are required' }), {
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+        }
+
+        const db = env.D1_DATABASE;
+        const stmt = db.prepare('UPDATE expense SET Category = ? WHERE Category = ?');
+        const result = await stmt.bind(newCategory, oldCategory).run();
+
+        return new Response(JSON.stringify({
+            updated: result.meta.changes,
+            message: `Reassigned ${result.meta.changes} expense(s) from "${oldCategory}" to "${newCategory}"`,
+        }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+        });
+    } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+});
 
 // Catch-all for 404s
 router.all('*', () => new Response('404, not found!', { status: 404 }));

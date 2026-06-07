@@ -5,6 +5,13 @@ import { createSummaryApp } from './summary/summary.js';
 function buildHTML() {
   return `
   <div id="category-charts"></div>
+  <div id="metric-total-current"></div>
+  <div id="metric-avg"></div>
+  <div id="metric-change"></div>
+  <div id="metric-top-category"></div>
+  <div id="metric-top-value"></div>
+  <canvas id="trends-chart"></canvas>
+  <canvas id="breakdown-chart"></canvas>
   <canvas id="total-chart"></canvas>
   `;
 }
@@ -15,7 +22,7 @@ describe('summary.js', () => {
     vi.setSystemTime(new Date('2024-08-15T00:00:00Z'));
   });
 
-  it('fetches last 6 months and renders charts', async () => {
+  it('fetches last 7 months and renders summary charts', async () => {
     const dom = new JSDOM(buildHTML(), { url: 'http://localhost/' });
     global.window = dom.window;
     global.document = dom.window.document;
@@ -41,7 +48,7 @@ describe('summary.js', () => {
     const app = createSummaryApp(domElements);
     await app.fetchAndRender();
 
-    expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(fetchMock).toHaveBeenCalledTimes(7);
     const urls = fetchMock.mock.calls.map(call => call[0]);
     expect(urls).toEqual([
       '/api/summary?year=2024&month=02',
@@ -49,10 +56,11 @@ describe('summary.js', () => {
       '/api/summary?year=2024&month=04',
       '/api/summary?year=2024&month=05',
       '/api/summary?year=2024&month=06',
-      '/api/summary?year=2024&month=07'
+      '/api/summary?year=2024&month=07',
+      '/api/summary?year=2024&month=08'
     ]);
-    expect(chartFactory).toHaveBeenCalledTimes(5);
-    expect(domElements.categoryChartsDiv.querySelectorAll('canvas').length).toBe(4);
-    expect(domElements.categoryChartsDiv.querySelectorAll('.chart-container').length).toBe(4);
+    expect(chartFactory).toHaveBeenCalledTimes(2);
+    // Code no longer creates individual category charts
+    expect(domElements.categoryChartsDiv.querySelectorAll('canvas').length).toBe(0);
   });
 });

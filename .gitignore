@@ -18,3 +18,5 @@ schema-and-data.sql
 .vscode/
 .DS_Store
 .claude
+coverage/
+.test-bundle/

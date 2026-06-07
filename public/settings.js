@@ -473,6 +473,16 @@ export function initSettingsModal() {
     const somIdx = settings.startOfMonthCategories.indexOf(cat);
     if (somIdx !== -1) settings.startOfMonthCategories[somIdx] = newName;
     saveSettings(settings);
+
+    // Also update existing DB records to use new category name
+    fetch('/api/expenses/category', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldCategory: cat, newCategory: newName }),
+    }).catch(function(err) {
+      console.error('Failed to rename category in DB:', err);
+    });
+
     openSettingsModal(); // Re-render
   });
 

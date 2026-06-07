@@ -64,8 +64,8 @@ describe('GET /api/expense', () => {
         expect(response.headers.get('Content-Type')).toBe('application/json');
         expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
         await expect(response.json()).resolves.toEqual(mockExpenses);
-        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date, Amount, Description, Category FROM expense WHERE strftime('%Y', Date) = ? AND strftime('%m', Date) = ?");
-        expect(mockBind).toHaveBeenCalledWith('2023', '01');
+        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date, Amount, Description, Category FROM expense WHERE Date >= ? AND Date < ?");
+        expect(mockBind).toHaveBeenCalledWith('2023-01-01', '2023-02-01');
     });
 
     it('should return an empty array if no expenses are found', async () => {
@@ -125,7 +125,7 @@ describe('GET /api/expense', () => {
 
             expect(response.status).toBe(204);
             expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
-            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, DELETE, OPTIONS');
+            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
             expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type');
         });
 

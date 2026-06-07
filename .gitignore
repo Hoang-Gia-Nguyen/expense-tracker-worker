@@ -10,3 +10,5 @@ schema-and-data.sql
 # Local analysis docs (not part of project source)
 ANALYSIS.md
 .test-bundle/
+
+SUMMARY_SUGGESTIONS.md

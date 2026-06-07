@@ -21,9 +21,91 @@
         </div>
     </nav>
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">Insights</h1>
-        <p class="text-center">Insights content goes here.</p>
+        <h1 class="mb-4 text-center">Spending Insights</h1>
+        
+        <!-- Loading spinner -->
+        <div id="loading-spinner" class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+
+        <!-- Daily Spending Trend Chart -->
+        <div id="daily-chart-section" class="card mb-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">Daily Spending (Last 30 Days)</h5>
+                <div style="height: 300px;">
+                    <canvas id="daily-spending-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Spikes -->
+        <div id="daily-spikes-section" class="card mb-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> Unusual Spending Days
+                </h5>
+                <p class="text-muted small">Days where spending exceeded normal patterns (2+ standard deviations above average)</p>
+                <div id="daily-spikes-content"></div>
+            </div>
+        </div>
+
+        <!-- Category Spikes -->
+        <div id="category-spikes-section" class="card mb-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up-arrow text-danger"></i> Category Spending Alerts
+                </h5>
+                <p class="text-muted small">Categories with 50%+ increase vs 6-month average</p>
+                <div id="category-spikes-content"></div>
+            </div>
+        </div>
+
+        <!-- Top Transactions -->
+        <div id="top-transactions-section" class="card mb-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-trophy-fill text-success"></i> Top 5 Transactions This Month
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-transactions-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { createInsightsApp } from '/insights.js';
+        const app = createInsightsApp({
+            dailyChart: document.getElementById('daily-spending-chart'),
+            dailySpikesContent: document.getElementById('daily-spikes-content'),
+            categorySpikesContent: document.getElementById('category-spikes-content'),
+            topTransactionsTbody: document.getElementById('top-transactions-tbody'),
+            sections: {
+                dailyChart: document.getElementById('daily-chart-section'),
+                dailySpikes: document.getElementById('daily-spikes-section'),
+                categorySpikes: document.getElementById('category-spikes-section'),
+                topTransactions: document.getElementById('top-transactions-section')
+            },
+            loadingSpinner: document.getElementById('loading-spinner'),
+            errorMessage: document.getElementById('error-message')
+        });
+        app.fetchAndRender();
+    </script>
 </body>
 </html>

@@ -181,6 +181,161 @@ describe('GET /api/summary', () => {
     });
 });
 
+
+describe('GET /api/summary/stats', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+    });
+
+    it('returns monthly stats with all fields', async () => {
+        mockAll
+            .mockResolvedValueOnce({ results: [{ total_spent: 10000000, transaction_count: 25 }] })
+            .mockResolvedValueOnce({ results: [{ category: 'Home', spend_vnd: 5000000 }] })
+            .mockResolvedValueOnce({ results: [{ total_spent: 8000000 }] });
+
+        const request = createMockRequest('http://localhost/api/summary/stats?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.totalSpent).toBe(10000000);
+        expect(data.avgDaily).toBeGreaterThan(0);
+        expect(data.transactionCount).toBe(25);
+        expect(data.biggestCategory.name).toBe('Home');
+        expect(data.biggestCategory.amount).toBe(5000000);
+        expect(data.vsLastMonth.amount).toBe(2000000);
+        expect(typeof data.vsLastMonth.percent).toBe('number');
+    });
+
+    it('returns 400 for missing params', async () => {
+        const request = createMockRequest('http://localhost/api/summary/stats?year=2024', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
+    });
+});
+
+describe('GET /api/summary/categories', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+    });
+
+    it('returns all categories with percentages and vs last month', async () => {
+        mockAll
+            .mockResolvedValueOnce({ results: [
+                { category: 'Home', spend_vnd: 5000000 },
+                { category: 'Food', spend_vnd: 3000000 },
+            ]})
+            .mockResolvedValueOnce({ results: [
+                { category: 'Home', spend_vnd: 4000000 },
+                { category: 'Food', spend_vnd: 3500000 },
+            ]});
+
+        const request = createMockRequest('http://localhost/api/summary/categories?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.length).toBe(2);
+        expect(data[0].category).toBe('Home');
+        expect(data[0].spend_vnd).toBe(5000000);
+        expect(data[0].percentOfTotal).toBeCloseTo(62.5, 1);
+        expect(data[0].vsLastMonth).toBe(1000000);
+    });
+});
+
+describe('GET /api/summary/comparison', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+    });
+
+    it('returns month-over-month comparison per category', async () => {
+        mockAll
+            .mockResolvedValueOnce({ results: [
+                { category: 'Home', spend_vnd: 5000000 },
+                { category: 'Food', spend_vnd: 3000000 },
+            ]})
+            .mockResolvedValueOnce({ results: [
+                { category: 'Home', spend_vnd: 4000000 },
+                { category: 'Food', spend_vnd: 3500000 },
+            ]});
+
+        const request = createMockRequest('http://localhost/api/summary/comparison?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.length).toBe(2);
+        const home = data.find(d => d.category === 'Home');
+        expect(home.current).toBe(5000000);
+        expect(home.previous).toBe(4000000);
+    });
+});
+
+describe('GET /api/summary/top-transactions', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockAll.mockResolvedValue({ results: [] });
+    });
+
+    it('returns top transactions for a given month', async () => {
+        mockAll.mockResolvedValueOnce({ results: [
+            { rowid: 1, date: '2024-07-15', amount: 2000000, description: 'Rent', category: 'Home' },
+            { rowid: 2, date: '2024-07-20', amount: 500000, description: 'Groceries', category: 'Food' },
+        ]});
+
+        const request = createMockRequest('http://localhost/api/summary/top-transactions?year=2024&month=07&limit=5', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.length).toBe(2);
+        expect(data[0].description).toBe('Rent');
+    });
+});
+
+describe('GET /api/summary/ytd', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+    });
+
+    it('returns year-to-date overview', async () => {
+        mockAll
+            .mockResolvedValueOnce({ results: [
+                { year_month: '2024-01', total: 10000000 },
+                { year_month: '2024-02', total: 12000000 },
+            ]})
+            .mockResolvedValueOnce({ results: [
+                { category: 'Home', total: 5000000 },
+                { category: 'Food', total: 3000000 },
+            ]});
+
+        const request = createMockRequest('http://localhost/api/summary/ytd?year=2024', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.totalSpent).toBe(22000000);
+        expect(data.monthlyBreakdown.length).toBe(2);
+        expect(data.categoryBreakdown.length).toBe(2);
+    });
+});
+
+
 // Test for static asset serving (basic check)
 describe('Static Asset Serving', () => {
     it('should return 404 for non-existent asset after fall-through', async () => {

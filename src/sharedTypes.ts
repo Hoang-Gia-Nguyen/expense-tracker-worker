@@ -76,3 +76,74 @@ export const InsightsResponseSchema = z.object({
 
 // Type for insights response
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
+
+// --- Summary Page Extended Schemas ---
+
+// Schema for biggest category item
+const BiggestCategorySchema = z.object({
+    name: z.string(),
+    amount: z.number(),
+}).nullable();
+
+// Schema for vsLastMonth
+const VsLastMonthSchema = z.object({
+    amount: z.number(),
+    percent: z.number(),
+});
+
+// Schema for GET /api/summary/stats response
+export const SummaryStatsSchema = z.object({
+    totalSpent: z.number(),
+    avgDaily: z.number(),
+    transactionCount: z.number(),
+    biggestCategory: BiggestCategorySchema,
+    vsLastMonth: VsLastMonthSchema,
+});
+
+export type SummaryStats = z.infer<typeof SummaryStatsSchema>;
+
+// Schema for a single category in the categories response
+const CategoryDetailSchema = z.object({
+    category: z.string(),
+    spend_vnd: z.number(),
+    percentOfTotal: z.number(),
+    vsLastMonth: z.number(),
+});
+
+// Schema for GET /api/summary/categories response
+export const SummaryCategoriesSchema = z.array(CategoryDetailSchema);
+
+export type SummaryCategories = z.infer<typeof SummaryCategoriesSchema>;
+
+// Schema for a single comparison item
+const ComparisonItemSchema = z.object({
+    category: z.string(),
+    current: z.number(),
+    previous: z.number(),
+});
+
+// Schema for GET /api/summary/comparison response
+export const SummaryComparisonSchema = z.array(ComparisonItemSchema);
+
+export type SummaryComparison = z.infer<typeof SummaryComparisonSchema>;
+
+// Schema for a monthly breakdown item in YTD
+const MonthlyBreakdownItemSchema = z.object({
+    year_month: z.string(),
+    total: z.number(),
+});
+
+// Schema for a category breakdown item in YTD
+const CategoryBreakdownItemSchema = z.object({
+    category: z.string(),
+    total: z.number(),
+});
+
+// Schema for GET /api/summary/ytd response
+export const SummaryYtdSchema = z.object({
+    totalSpent: z.number(),
+    monthlyBreakdown: z.array(MonthlyBreakdownItemSchema),
+    categoryBreakdown: z.array(CategoryBreakdownItemSchema),
+});
+
+export type SummaryYtd = z.infer<typeof SummaryYtdSchema>;

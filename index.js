@@ -47,7 +47,7 @@ staticRoutes.forEach(path => {
 
 // Mount API routers
 router.all('/api/expense', expensesRouter.handle);
-router.all('/api/summary', summaryRouter.handle);
+router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);
 router.all('/api/config', configRouter.handle); // Mount the config router
 

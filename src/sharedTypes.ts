@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Schema for an Expense record in the database
 export const ExpenseSchema = z.object({
-    date: z.string().datetime({ message: "Date must be a valid ISO 8601 string" }),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, { message: "Date must be a valid date or datetime string (YYYY-MM-DD or ISO 8601)" }),
     amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }),
     description: z.string().min(1, { message: "Description cannot be empty" }),
     category: z.string().min(1, { message: "Category cannot be empty" }),
@@ -32,7 +32,6 @@ export const DeleteExpenseInputSchema = z.object({
 
 // Type for delete expense input
 export type DeleteExpenseInput = z.infer<typeof DeleteExpenseInputSchema>;
-
 
 // --- API Response Schemas ---
 

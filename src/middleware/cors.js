@@ -1,5 +1,24 @@
-import { CORS_ALLOWED_ORIGINS } from '../config'; // Assuming config will be created later
+import { CORS_ALLOWED_ORIGINS } from '../config';
 
+/**
+ * Generate CORS headers based on the request origin.
+ * Used by route handlers to attach CORS headers to responses.
+ */
+export function getCorsHeaders(request) {
+    const origin = request.headers.get('Origin');
+    if (CORS_ALLOWED_ORIGINS.includes(origin)) {
+        return {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        };
+    }
+    return { 'Access-Control-Allow-Origin': 'null' };
+}
+
+/**
+ * Middleware to handle CORS preflight (OPTIONS) requests.
+ */
 export function corsMiddleware(request) {
     const origin = request.headers.get('Origin');
     const headers = {};
@@ -9,10 +28,9 @@ export function corsMiddleware(request) {
         headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
         headers['Access-Control-Allow-Headers'] = 'Content-Type';
     } else {
-        headers['Access-Control-Allow-Origin'] = 'null'; // Disallow other origins
+        headers['Access-Control-Allow-Origin'] = 'null';
     }
 
-    // Handle OPTIONS requests specifically
     if (request.method === 'OPTIONS') {
         return new Response(null, {
             status: 204,
@@ -20,7 +38,5 @@ export function corsMiddleware(request) {
         });
     }
 
-    // Do NOT return anything here if you want itty-router to continue
-    // to subsequent handlers. Returning an object will stop the router.
     return undefined;
 }

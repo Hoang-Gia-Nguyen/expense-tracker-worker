@@ -8,7 +8,7 @@ Expense Tracker Worker is a serverless application that records personal spendin
 ├── index.js        # Worker logic and API routes
 ├── public/         # Static assets served by the worker
 ├── schema.sql      # D1 database schema
-├── wrangler.toml   # Wrangler configuration
+├── wrangler.jsonc   # Wrangler configuration
 └── package.json    # Dependencies and scripts
 ```
 
@@ -29,7 +29,7 @@ Expense Tracker Worker is a serverless application that records personal spendin
    npx wrangler d1 create cf-mony-worker-dev
    npx wrangler d1 create cf-mony-worker-prod
    ```
-   Update `wrangler.toml` with the returned `database_id` values.
+   Update `wrangler.jsonc` with the returned `database_id` values.
 3. **Apply the schema**
    ```bash
    npx wrangler d1 execute cf-mony-worker-dev --local --file=./schema.sql
@@ -54,7 +54,7 @@ Deploy the worker to Cloudflare:
 ```bash
 npx wrangler deploy
 ```
-Make sure `wrangler.toml` is configured with your production database.
+Make sure `wrangler.jsonc` is configured with your production database.
 
 ## Contributing
 Pull requests and issues are welcome. Please open an issue before submitting large changes.

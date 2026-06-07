@@ -1,37 +1,18 @@
 import { Router } from 'itty-router';
 import { errorHandlerMiddleware } from '../middleware/errorHandler';
-import { CORS_ALLOWED_ORIGINS } from '../config';
-import { z } from 'zod'; // Import z from Zod
-
-// Import schemas for API responses
-import {
-    ApiExpenseSchema,
-    GetExpensesResponseSchema,
-    SummarySchema,
-    InsightsResponseSchema,
-} from '../sharedTypes';
+import { getCorsHeaders } from '../middleware/cors';
+import { AppError } from '../utils/AppError';
+import { InsightsResponseSchema } from '../sharedTypes';
 
 const insightsRouter = Router();
 
-const getHeaders = (request) => {
-    const origin = request.headers.get('Origin');
-    if (CORS_ALLOWED_ORIGINS.includes(origin)) {
-        return {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        };
-    }
-    return { 'Access-Control-Allow-Origin': 'null' };
-};
-
 // Handle GET requests for insights
 insightsRouter.get('/api/insights', async (request, env, context) => {
-    const headers = getHeaders(request);
+    const headers = getCorsHeaders(request);
     try {
         // Basic check for D1_DATABASE binding
         if (!env.D1_DATABASE) {
-            throw new Error('D1_DATABASE not configured');
+            throw new AppError('D1_DATABASE not configured', 500);
         }
 
         const db = env.D1_DATABASE;
@@ -82,58 +63,52 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
         const currentYear = currentDate.getFullYear();
         const currentMonthYear = `${currentYear}-${currentMonth}`;
 
+        // Single query replacing N+1 pattern: for each category in the current month,
+        // compute the average spend over the previous 6 months
         const categoryStmt = db.prepare(`
-            SELECT category, spend_vnd
-            FROM v_monthly_category_spend
-            WHERE year_month = ?
+            SELECT
+                c.category,
+                c.spend_vnd AS current_spend,
+                COALESCE(
+                    (SELECT AVG(h.spend_vnd)
+                     FROM (
+                        SELECT spend_vnd
+                        FROM v_monthly_category_spend
+                        WHERE category = c.category
+                        AND year_month < c.year_month
+                        ORDER BY year_month DESC
+                        LIMIT 6
+                     ) h
+                    ), 0
+                ) AS avg_spend
+            FROM v_monthly_category_spend c
+            WHERE c.year_month = ?
         `);
-        const { results: currentCategories } = await categoryStmt.bind(currentMonthYear).all();
+        const { results: categoryResults } = await categoryStmt.bind(currentMonthYear).all();
 
-        const categorySpikes = [];
-
-        for (const row of currentCategories) {
-            const avgStmt = db.prepare(`
-                SELECT AVG(spend_vnd) as avg_spend
-                FROM v_monthly_category_spend
-                WHERE category = ?
-                AND year_month < ?
-                ORDER BY year_month DESC
-                LIMIT 6
-            `);
-            const { results } = await avgStmt.bind(row.category, currentMonthYear).all();
-            const avg = results[0]?.avg_spend || 0;
-
-            if (avg > 0 && row.spend_vnd > avg * 1.5) {
-                categorySpikes.push({
-                    category: row.category,
-                    current: row.spend_vnd,
-                    percentIncrease: ((row.spend_vnd - avg) / avg) * 100
-                });
-            }
-        }
+        const categorySpikes = categoryResults
+            .filter(r => r.avg_spend > 0 && r.current_spend > r.avg_spend * 1.5)
+            .map(r => ({
+                category: r.category,
+                current: r.current_spend,
+                percentIncrease: ((r.current_spend - r.avg_spend) / r.avg_spend) * 100
+            }));
 
         // ===== 3. Top 5 transactions (this month) =====
         const topStmt = db.prepare(`
-            SELECT rowid, Date, Amount, Description, Category
+            SELECT rowid, Date AS date, Amount AS amount, Description AS description, Category AS category
             FROM expense
             WHERE strftime('%Y-%m', Date) = ?
             ORDER BY Amount DESC
             LIMIT 5
         `);
         const { results: topTransactionsResults } = await topStmt.bind(currentMonthYear).all();
-        const topTransactions = topTransactionsResults.map(row => ({
-            rowid: row.rowid,
-            date: row.Date,
-            amount: row.Amount,
-            description: row.Description,
-            category: row.Category
-        }));
 
         const insightsData = {
             dailySeries,
             dailySpikes,
             categorySpikes,
-            topTransactions
+            topTransactions: topTransactionsResults
         };
 
         // Validate the fetched data against the InsightsResponseSchema
@@ -151,7 +126,7 @@ insightsRouter.get('/api/insights', async (request, env, context) => {
 
 // Catch-all for routes within this router that are not handled
 insightsRouter.all('*', (request) => {
-    return new Response('Insights API endpoint not found', { status: 404, headers: getHeaders(request) });
+    return new Response('Insights API endpoint not found', { status: 404, headers: getCorsHeaders(request) });
 });
 
 export { insightsRouter };

@@ -6,7 +6,7 @@ info:
 servers:
   - url: /api
     description: Local development server
-  - url: https://mony-worker.hgnguyen37.workers.dev
+  - url: https://expensetracker.hgnlab.org
     description: Production server
 paths:
   /api/expense:
@@ -202,17 +202,17 @@ components:
         rowid:
           type: integer
           description: The unique identifier for the expense.
-        Date:
+        date:
           type: string
-          format: date-time
-          description: The date and time of the expense (ISO 8601 format).
-        Amount:
+          format: date
+          description: The date of the expense (YYYY-MM-DD).
+        amount:
           type: number
-          description: The amount of the expense.
-        Description:
+          description: The amount of the expense (in VND).
+        description:
           type: string
           description: A brief description of the expense.
-        Category:
+        category:
           type: string
           description: The category of the expense.
     NewExpense:

@@ -11,10 +11,16 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",
+    "esbuild": "^0.28.0",
     "jsdom": "^26.1.0",
+    "miniflare": "^4.20260603.0",
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run --reporter=verbose",
+    "test:unit": "vitest run --reporter=verbose index.test.js static-assets.test.js",
+    "test:integration": "node scripts/build-test-worker.mjs && vitest run --reporter=verbose integration.test.js",
+    "test:all": "vitest run --reporter=verbose",
+    "test:coverage": "vitest --coverage"
   }
 }

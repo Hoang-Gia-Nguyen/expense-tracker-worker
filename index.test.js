@@ -47,7 +47,7 @@ describe('GET /api/expense', () => {
 
         // Set default mock for D1_DATABASE.prepare().bind().all()
         mockAll.mockResolvedValue({ results: [] });
-        mockRun.mockResolvedValue({ success: true });
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
     });
 
     it('should return expenses for a valid year and month', async () => {
@@ -56,8 +56,8 @@ describe('GET /api/expense', () => {
             { rowid: 2, date: '2023-01-20T00:00:00Z', amount: 25, description: 'Coffee', category: 'Drinks' },
         ];
         mockAll.mockResolvedValueOnce({ results: [
-            { rowid: 1, Date: '2023-01-15T00:00:00Z', Amount: 50, Description: 'Groceries', Category: 'Food' },
-            { rowid: 2, Date: '2023-01-20T00:00:00Z', Amount: 25, Description: 'Coffee', Category: 'Drinks' },
+            { rowid: 1, date: '2023-01-15T00:00:00Z', amount: 50, description: 'Groceries', category: 'Food' },
+            { rowid: 2, date: '2023-01-20T00:00:00Z', amount: 25, description: 'Coffee', category: 'Drinks' },
         ] });
 
         const request = createMockRequest('http://localhost/api/expense?year=2023&month=01', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
@@ -67,7 +67,7 @@ describe('GET /api/expense', () => {
         expect(response.headers.get('Content-Type')).toBe('application/json');
         expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
         await expect(response.json()).resolves.toEqual(mockExpenses);
-        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date, Amount, Description, Category FROM expense WHERE strftime('%Y', Date) = ? AND strftime('%m', Date) = ?");
+        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date AS date, Amount AS amount, Description AS description, Category AS category FROM expense WHERE strftime('%Y', Date) = ? AND strftime('%m', Date) = ?");
         expect(mockBind).toHaveBeenCalledWith('2023', '01');
     });
 
@@ -207,7 +207,7 @@ describe('Static Asset Serving', () => {
 describe('POST /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRun.mockResolvedValue({ success: true });
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
         mockPrepare.mockReset();
         mockBind.mockReset();
     });
@@ -278,7 +278,7 @@ describe('POST /api/expense', () => {
 describe('PUT /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRun.mockResolvedValue({ success: true });
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
         mockPrepare.mockReset();
         mockBind.mockReset();
     });
@@ -353,14 +353,14 @@ describe('PUT /api/expense', () => {
 describe('DELETE /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRun.mockResolvedValue({ success: true });
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
         mockPrepare.mockReset();
         mockBind.mockReset();
     });
 
     it('should delete an expense successfully', async () => {
         const expenseToDelete = { id: 1 };
-        mockRun.mockResolvedValueOnce({ success: true }); // Explicitly mock for this test
+        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 1 } }); // Explicitly mock for this test
 
         const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);
@@ -383,7 +383,7 @@ describe('DELETE /api/expense', () => {
 
     it('should return 404 if expense to delete is not found', async () => {
         const expenseToDelete = { id: 999 }; // Non-existent ID
-        mockRun.mockResolvedValueOnce({ success: false }); // Simulate no rows affected
+        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 0 } }); // Simulate no rows affected
 
         const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);

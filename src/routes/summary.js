@@ -1,22 +1,11 @@
 import { Router } from 'itty-router';
 import { errorHandlerMiddleware } from '../middleware/errorHandler';
-import { CORS_ALLOWED_ORIGINS } from '../config';
-import { SummarySchema } from '../sharedTypes'; // Import Zod schema
-import { z } from 'zod'; // Import z from Zod
+import { getCorsHeaders } from '../middleware/cors';
+import { AppError } from '../utils/AppError';
+import { SummarySchema } from '../sharedTypes';
+import { z } from 'zod';
 
 const summaryRouter = Router();
-
-const getHeaders = (request) => {
-    const origin = request.headers.get('Origin');
-    if (CORS_ALLOWED_ORIGINS.includes(origin)) {
-        return {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        };
-    }
-    return { 'Access-Control-Allow-Origin': 'null' };
-};
 
 // Helper to parse and validate query parameters for GET requests
 const parseQueryParams = (request, schema) => {
@@ -26,7 +15,7 @@ const parseQueryParams = (request, schema) => {
         return schema.parse(params);
     } catch (error) {
         if (error.issues) {
-            throw new Error(`Validation Error: ${error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ')}`);
+            throw new AppError(`Validation Error: ${error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ')}`, 400);
         }
         throw error;
     }
@@ -34,7 +23,7 @@ const parseQueryParams = (request, schema) => {
 
 // Handle GET requests for summary
 summaryRouter.get('/api/summary', async (request, env, context) => {
-    const headers = getHeaders(request);
+    const headers = getCorsHeaders(request);
     try {
         // Define a schema for query parameters
         const queryParamsSchema = z.object({
@@ -63,7 +52,7 @@ summaryRouter.get('/api/summary', async (request, env, context) => {
 
 // Catch-all for routes within this router that are not handled
 summaryRouter.all('*', (request) => {
-    return new Response('Summary API endpoint not found', { status: 404, headers: getHeaders(request) });
+    return new Response('Summary API endpoint not found', { status: 404, headers: getCorsHeaders(request) });
 });
 
 export { summaryRouter };

@@ -23,29 +23,13 @@ function buildHTML() {
     <input id="amount" />
     <input id="description" />
     <select id="category">
-      <option value=""></option>
-      <option value="Food">Food</option>
-      <option value="Transportation">Transportation</option>
-      <option value="Entertainment">Entertainment</option>
-      <option value="Home">Home</option>
-      <option value="Other">Other</option>
-      <option value="Baby">Baby</option>
-      <option value="Gift">Gift</option>
-      <option value="Medical/Utility">Medical/Utility</option>
+      <option value="" disabled selected>Select a category</option>
     </select>
     <button id="add-expense-btn" disabled>Add</button>
 
     <input id="month-picker" />
     <select id="category-filter">
       <option value="All">All</option>
-      <option value="Food">Food</option>
-      <option value="Transportation">Transportation</option>
-      <option value="Entertainment">Entertainment</option>
-      <option value="Home">Home</option>
-      <option value="Other">Other</option>
-      <option value="Baby">Baby</option>
-      <option value="Gift">Gift</option>
-      <option value="Medical/Utility">Medical/Utility</option>
     </select>
 
     <div id="total-summary"></div>
@@ -75,8 +59,9 @@ function buildHTML() {
     <input id="modify-date" />
     <input id="modify-amount" />
     <input id="modify-description" />
-    <input id="modify-category" />
+    <select id="modify-category"></select>
     <button id="confirm-modify-btn"></button>
+    <button id="settings-btn"></button>
   </body>
 </html>
   `;
@@ -104,6 +89,43 @@ async function bootApp({
   global.window = window;
   global.document = document;
 
+  // Pre-populate category selects to match what settings.js would provide on page load
+  const testCategories = ['Food', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Baby', 'Other'];
+  function populateSelect(selectId, options) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = '';
+    options.forEach(function(opt) {
+      const el = document.createElement('option');
+      el.value = opt.value;
+      el.textContent = opt.label;
+      if (opt.selected) { el.selected = true; }
+      sel.appendChild(el);
+    });
+  }
+  populateSelect('category', [
+    { value: '', label: 'Select a category' }
+  ].concat(testCategories.map(function(c) { return { value: c, label: c }; })));
+  populateSelect('modify-category', testCategories.map(function(c) { return { value: c, label: c }; }));
+  populateSelect('category-filter', [
+    { value: 'All', label: 'All Categories', selected: true }
+  ].concat(testCategories.map(function(c) { return { value: c, label: c }; })));
+
+  // Mock localStorage for settings module
+  const localStorageMock = (() => {
+    let store = {};
+    return {
+      getItem: (key) => store[key] || null,
+      setItem: (key, value) => { store[key] = String(value); },
+      removeItem: (key) => { delete store[key]; },
+      clear: () => { store = {}; },
+      get length() { return Object.keys(store).length; },
+      key: (i) => Object.keys(store)[i] || null,
+    };
+  })();
+  Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
+  global.localStorage = window.localStorage;
+
   // Mocks
   global.alert = vi.fn();
   window.alert = global.alert;
@@ -115,6 +137,7 @@ async function bootApp({
   global.bootstrap = {
     Modal: vi.fn(createModal),
     Tooltip: vi.fn(() => ({})),
+    getOrCreateInstance: vi.fn(() => ({ show: showSpy, hide: hideSpy })),
   };
   window.bootstrap = global.bootstrap;
 
@@ -132,9 +155,9 @@ async function bootApp({
   global.fetch = fetchMock;
   window.fetch = fetchMock;
 
-  // Console silencing (optional)
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  // Console silencing - uncomment to debug
+  // vi.spyOn(console, 'log').mockImplementation(() => {});
+  // vi.spyOn(console, 'error').mockImplementation(() => {});
 
   // --- NEW: Initialize the app using createExpenseTrackerApp ---
   const domElements = {

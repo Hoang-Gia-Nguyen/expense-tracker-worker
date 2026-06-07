@@ -30,6 +30,9 @@ describe('index.html structure', () => {
     expect(descriptionInput).toBeTruthy();
     expect(categoryInput).toBeTruthy();
     expect(categoryInput.tagName).toBe('SELECT');
+    // Category options are now populated dynamically by settings.js
+    expect(categoryInput.querySelectorAll('option').length).toBe(1);
+    expect(categoryInput.querySelector('option').value).toBe('');
     expect(addBtn).toBeTruthy();
     expect(addBtn.disabled).toBe(true);
     expect(addBtn?.disabled).toBe(true);
@@ -49,8 +52,15 @@ describe('index.html structure', () => {
     expect(document.getElementById('burndown-chart')).not.toBeNull();
   });
 
-  it('renders navigation links for other pages', () => {
+  it('renders navigation links and settings button', () => {
     const navLinks = Array.from(document.querySelectorAll('nav .nav-link')).map(a => a.getAttribute('href'));
     expect(navLinks).toEqual(['/expense', '/summary', '/insights']);
+    const settingsBtn = document.getElementById('settings-btn');
+    expect(settingsBtn).toBeTruthy();
+  });
+
+  it('includes the settings.js module script', () => {
+    const script = document.querySelector('script[type="module"][src="/settings.js"]');
+    expect(script).not.toBeNull();
   });
 });

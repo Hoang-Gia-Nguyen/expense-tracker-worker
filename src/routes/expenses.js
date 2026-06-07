@@ -7,6 +7,7 @@ import {
     UpdateExpenseInputSchema,
     DeleteExpenseInputSchema,
     GetExpensesResponseSchema,
+    BatchCategoryUpdateSchema,
 } from '../sharedTypes';
 
 const expensesRouter = Router();
@@ -126,6 +127,31 @@ expensesRouter.delete('/api/expense', async (request, env, context) => {
         } else {
             throw new AppError('Expense not found or delete failed', 404);
         }
+    } catch (error) {
+        return errorHandlerMiddleware(error, request, env, context);
+    }
+});
+
+// Handle PATCH requests for batch category reassignment
+expensesRouter.patch('/api/expenses/category', async (request, env, context) => {
+    const headers = getCorsHeaders(request);
+    try {
+        const body = await parseJsonBody(request, BatchCategoryUpdateSchema);
+        const { oldCategory, newCategory } = body;
+
+        const db = env.D1_DATABASE;
+        const stmt = db.prepare(
+            'UPDATE expense SET Category = ? WHERE Category = ?'
+        );
+        const result = await stmt.bind(newCategory, oldCategory).run();
+
+        return new Response(JSON.stringify({
+            updated: result.meta.changes,
+            message: `Reassigned ${result.meta.changes} expense(s) from "${oldCategory}" to "${newCategory}"`,
+        }), {
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            status: 200,
+        });
     } catch (error) {
         return errorHandlerMiddleware(error, request, env, context);
     }

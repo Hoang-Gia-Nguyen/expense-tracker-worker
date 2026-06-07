@@ -40,7 +40,7 @@ export const FRONTEND_CONFIG = {
         'Gift': { color: '#C9CBCF' },
         'Other': { color: '#808080' },
     },
-    categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other'],
+    categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other', 'Uncategorized'],
     startOfMonthCategories: ['Home', 'Baby'],
 };
 

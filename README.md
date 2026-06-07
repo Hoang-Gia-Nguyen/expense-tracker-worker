@@ -7,8 +7,15 @@ Expense Tracker Worker is a serverless application that records personal spendin
 /
 ├── index.js        # Worker logic and API routes
 ├── public/         # Static assets served by the worker
+│   ├── settings.js # Shared settings module (categories, budgets, localStorage)
+│   ├── scripts.js  # Expense page logic
+│   ├── summary.js  # Summary page logic
+│   ├── insights.js # Insights page logic
+│   └── styles.css  # Global styles
 ├── schema.sql      # D1 database schema
-├── wrangler.jsonc   # Wrangler configuration
+├── seed.sql        # Seed data for local development
+├── wrangler.jsonc  # Wrangler configuration
+├── AGENTS.md       # Repository guidelines
 └── package.json    # Dependencies and scripts
 ```
 
@@ -55,6 +62,13 @@ Deploy the worker to Cloudflare:
 npx wrangler deploy
 ```
 Make sure `wrangler.jsonc` is configured with your production database.
+
+## Settings
+
+The app includes a settings panel (gear icon in the navbar) where you can:
+- **Manage categories**: Add or remove custom categories with color pickers
+- **Set budgets**: Per-category monthly budgets and a total monthly budget
+- Settings are saved to `localStorage` and persist across sessions
 
 ## Contributing
 Pull requests and issues are welcome. Please open an issue before submitting large changes.

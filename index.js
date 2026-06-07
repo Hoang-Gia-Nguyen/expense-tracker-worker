@@ -50,6 +50,7 @@ router.all('/api/expense', expensesRouter.handle);
 router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);
 router.all('/api/config', configRouter.handle); // Mount the config router
+router.all('/api/expenses/category', expensesRouter.handle); // Mount the batch category update handler
 
 // Catch-all for assets and 404s
 router.all('*', async (request, env, context) => {

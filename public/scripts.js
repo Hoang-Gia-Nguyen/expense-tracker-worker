@@ -1,26 +1,22 @@
-const apiUrl = '/api/expense';
-const monthlyBudget = {
-    'Food': 5000000,
-    'Medical/Utility': 2000000,
-    'Transportation': 1000000,
-    'Entertainment': 1500000,
-    'Home': 2000000,
-    'Baby': 15000000,
-};
-const totalBudget = 20000000;
+import {
+  getCategories, getCategoryOrder, getCategoryColors,
+  getBudgets, getTotalBudget, getStartOfMonthCategories,
+  populateCategorySelect, initSettings, openSettingsModal,
+} from './settings.js';
 
-const categoryConfig = {
-    'Food': { color: '#FF6384' },
-    'Medical/Utility': { color: '#4BC0C0' },
-    'Home': { color: '#FFCE56' },
-    'Transportation': { color: '#36A2EB' },
-    'Entertainment': { color: '#9966FF' },
-    'Baby': { color: '#FF9F40' },
-    'Gift': { color: '#C9CBCF' },
-    'Other': { color: '#808080' },
+const apiUrl = '/api/expense';
+let monthlyBudgetFn = () => getBudgets();
+let totalBudgetFn = () => getTotalBudget();
+let categoryConfigFn = () => {
+  const colors = getCategoryColors();
+  const config = {};
+  for (const [cat, color] of Object.entries(colors)) {
+    config[cat] = { color };
+  }
+  return config;
 };
-const categoryOrder = ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other'];
-const startOfMonthCategories = ['Home', 'Baby'];
+let categoryOrderFn = () => getCategoryOrder();
+let startOfMonthCategoriesFn = () => getStartOfMonthCategories();
 
 export function createExpenseTrackerApp(domElements) {
     // Moved inside to ensure correct scope
@@ -102,13 +98,13 @@ export function createExpenseTrackerApp(domElements) {
         const chartData = [];
         const chartColors = [];
 
-        const budgetedCategories = categoryOrder.filter(category => monthlyBudget.hasOwnProperty(category) && !startOfMonthCategories.includes(category));
+        const budgetedCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
 
         budgetedCategories.forEach(category => {
             if (summary[category] > 0) {
                 chartLabels.push(category);
                 chartData.push(summary[category]);
-                chartColors.push(categoryConfig[category]?.color || '#808080');
+                chartColors.push(categoryConfigFn()[category]?.color || '#808080');
             }
         });
 
@@ -140,8 +136,8 @@ export function createExpenseTrackerApp(domElements) {
         const [year, month] = monthPicker.value.split('-');
         const daysInMonth = new Date(year, month, 0).getDate();
 
-        const dailySpendingCategories = categoryOrder.filter(category => monthlyBudget.hasOwnProperty(category) && !startOfMonthCategories.includes(category));
-        const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudget[category] || 0), 0);
+        const dailySpendingCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
+        const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudgetFn()[category] || 0), 0);
 
         const dailyTotals = Array(daysInMonth).fill(0);
         data.forEach(expense => {
@@ -237,7 +233,7 @@ export function createExpenseTrackerApp(domElements) {
         // Recalculate and render with animation
         setTimeout(() => {
             const totalSpent = Object.values(summary).reduce((sum, total) => sum + total, 0);
-            const totalPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+            const totalBudget = totalBudgetFn(); const totalPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
             const totalProgressBarColor = getProgressBarColor(totalPercentage);
 
             totalSummaryDiv.innerHTML = `
@@ -245,7 +241,7 @@ export function createExpenseTrackerApp(domElements) {
                     <div class="card-header">Monthly Summary</div>
                     <div class="card-body">
                         <h5 class="card-title">Total Spent: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalSpent)}</h5>
-                        <p class="card-text">Total Budget: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalBudget)}</p>
+                        <p class="card-text">Total Budget: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalBudgetFn())}</p>
                         <div class="progress" style="height: 25px;">
                             <div class="progress-bar ${totalProgressBarColor}" role="progressbar" style="width: ${totalPercentage}%;" aria-valuenow="${totalPercentage}" aria-valuemin="0" aria-valuemax="100">${totalPercentage}%</div>
                         </div>
@@ -253,9 +249,9 @@ export function createExpenseTrackerApp(domElements) {
                 </div>
             `;
 
-            const dailySpendingCategories = categoryOrder.filter(category => monthlyBudget.hasOwnProperty(category) && !startOfMonthCategories.includes(category));
+            const dailySpendingCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
             const dailySpent = dailySpendingCategories.reduce((sum, category) => sum + (summary[category] || 0), 0);
-            const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudget[category] || 0), 0);
+            const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudgetFn()[category] || 0), 0);
             const dailyPercentage = dailyBudget > 0 ? Math.round((dailySpent / dailyBudget) * 100) : 0;
             const dailyProgressBarColor = getProgressBarColor(dailyPercentage);
 
@@ -276,8 +272,8 @@ export function createExpenseTrackerApp(domElements) {
             `;
 
             let startOfMonthHtml = '<h5>Start-of-month Spending</h5><div class="row">';
-            startOfMonthCategories.forEach(category => {
-                const budget = monthlyBudget[category] || 0;
+            startOfMonthCategoriesFn().forEach(category => {
+                const budget = monthlyBudgetFn()[category] || 0;
                 const total = summary[category] || 0;
                 const percentage = budget > 0 ? Math.round((total / budget) * 100) : 0;
                 const progressBarColor = getProgressBarColor(percentage);
@@ -300,7 +296,7 @@ export function createExpenseTrackerApp(domElements) {
             startOfMonthSummaryDiv.innerHTML = startOfMonthHtml;
 
             let budgetedHtml = '<h5>Budgeted Categories</h5><div class="row">';
-            Object.entries(monthlyBudget).filter(([category]) => !startOfMonthCategories.includes(category)).forEach(([category, budget]) => {
+            Object.entries(monthlyBudgetFn()).filter(([category]) => !startOfMonthCategoriesFn().includes(category)).forEach(([category, budget]) => {
                 const total = summary[category] || 0;
                 const percentage = Math.round((total / budget) * 100);
                 const progressBarColor = getProgressBarColor(percentage);
@@ -322,7 +318,7 @@ export function createExpenseTrackerApp(domElements) {
             budgetedHtml += '</div>';
             budgetedSummaryDiv.innerHTML = budgetedHtml;
 
-            const otherSpending = Object.entries(summary).filter(([category]) => !monthlyBudget[category]);
+            const otherSpending = Object.entries(summary).filter(([category]) => !monthlyBudgetFn()[category]);
             let otherSpendingHtml = '<h5>Other Spending</h5><div class="row">';
             if (otherSpending.length > 0) {
                 otherSpending.sort(([, a], [, b]) => b - a).forEach(([category, total]) => {
@@ -478,6 +474,19 @@ export function createExpenseTrackerApp(domElements) {
             modifyDateInput.value = expenseToModify.date;
             modifyAmountInput.value = formatNumber(expenseToModify.amount.toString());
             modifyDescriptionInput.value = expenseToModify.description;
+            // If the expense's category is not in the dropdown (e.g. deleted from settings),
+            // add it as an option so the value is preserved when editing
+            const catExists = Array.from(modifyCategoryInput.options).some(
+                opt => opt.value === expenseToModify.category
+            );
+            if (!catExists) {
+                const opt = document.createElement('option');
+                opt.value = expenseToModify.category;
+                opt.textContent = expenseToModify.category + ' (deleted)';
+                opt.style.fontStyle = 'italic';
+                opt.style.color = '#6c757d';
+                modifyCategoryInput.appendChild(opt);
+            }
             modifyCategoryInput.value = expenseToModify.category;
             modifyExpenseModal.show();
         }
@@ -639,6 +648,15 @@ export function createExpenseTrackerApp(domElements) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize settings system
+    initSettings();
+    document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
+
+    // Populate category dropdowns from settings
+    populateCategorySelect(document.getElementById('category'), { placeholder: 'Select a category' });
+    populateCategorySelect(document.getElementById('modify-category'));
+    populateCategorySelect(document.getElementById('category-filter'), { includeAll: true });
+
     const domElements = {
         expenseForm: document.getElementById('expense-form'),
         expenseList: document.getElementById('expense-list'),
@@ -670,5 +688,14 @@ document.addEventListener('DOMContentLoaded', () => {
         modifyCategoryInput: document.getElementById('modify-category'),
         confirmModifyBtn: document.getElementById('confirm-modify-btn')
     };
-    createExpenseTrackerApp(domElements);
+    const app = createExpenseTrackerApp(domElements);
+
+    // Re-populate category dropdowns when settings change
+    window.addEventListener('settings-changed', () => {
+        populateCategorySelect(document.getElementById('category'), { placeholder: 'Select a category' });
+        populateCategorySelect(document.getElementById('modify-category'));
+        populateCategorySelect(document.getElementById('category-filter'), { includeAll: true });
+    populateCategorySelect(document.getElementById('category-filter'), { includeAll: true });
+        app.fetchExpensesForMonth();
+    });
 });

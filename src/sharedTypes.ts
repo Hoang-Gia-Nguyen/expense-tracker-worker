@@ -77,6 +77,14 @@ export const InsightsResponseSchema = z.object({
 // Type for insights response
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
 
+// Schema for PATCH /api/expenses/category (batch category reassignment)
+export const BatchCategoryUpdateSchema = z.object({
+    oldCategory: z.string().min(1, { message: "oldCategory is required" }),
+    newCategory: z.string().min(1, { message: "newCategory is required" }),
+});
+
+export type BatchCategoryUpdate = z.infer<typeof BatchCategoryUpdateSchema>;
+
 // --- Summary Page Extended Schemas ---
 
 // Schema for biggest category item

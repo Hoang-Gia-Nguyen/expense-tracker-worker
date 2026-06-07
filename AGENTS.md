@@ -4,12 +4,18 @@
 
 ```
 /
+├── AGENTS.md            # Repository guidelines
 ├── index.js              # Worker entry point — router, middleware, export
 ├── src/
 │   ├── middleware/       # cors.js, errorHandler.js
 │   ├── routes/          # expenses.js, summary.js, insights.js, api/config/
 │   └── config/          # frontendConfig.ts, sharedTypes.ts
 ├── public/              # Static frontend (HTML, CSS, JS, TS)
+│   ├── settings.js      # Shared settings module (categories, budgets, localStorage)
+│   ├── scripts.js       # Expense page logic
+│   ├── summary.js       # Summary page logic
+│   ├── insights.js      # Insights page logic
+│   └── styles.css       # Global styles
 ├── schema.sql           # D1 database schema
 ├── seed.sql             # Seed data for local development
 ├── drop.sql             # D1 teardown script
@@ -20,6 +26,7 @@
 ```
 
 - Backend logic lives in `src/routes/`; shared middleware in `src/middleware/`.
+- `public/settings.js` is a shared module that manages user preferences (categories, budgets, category colors) via `localStorage`. It is used by all frontend pages.
 - Frontend pages reside under `public/{expense,summary,insights}/`.
 - TypeScript sources in `src/` compile to the worker entry, but `index.js` and `public/scripts.js` remain JS.
 - SQL files (`schema.sql`, `seed.sql`) are versioned alongside code for D1 provisioning.
@@ -31,6 +38,7 @@
 | `npm install` | Install dependencies |
 | `npm test` | Run unit & integration tests with Vitest |
 | `npx vitest --coverage` | Run tests with coverage report |
+| `npm test` | Run all tests (equivalent to `npx vitest run`) |
 | `npx wrangler dev` | Start local dev server at `http://localhost:8787` |
 | `npx wrangler deploy` | Deploy to Cloudflare Workers (production) |
 | `npx wrangler d1 execute <db> --local --file=schema.sql` | Apply schema locally |

@@ -30,7 +30,7 @@ const mockEnv = {
 // Helper function to create a mock Request
 const createMockRequest = (url, method = 'GET', headers = {}, body = null) => {
     const options = { method, headers };
-    if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+    if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE' || method === 'PATCH')) {
         options.body = JSON.stringify(body);
     }
     return new Request(url, options);
@@ -557,6 +557,42 @@ describe('DELETE /api/expense', () => {
 
         expect(response.status).toBe(500);
         await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+    });
+});
+
+describe('PATCH /api/expenses/category', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 3 } });
+    });
+
+    it('should reassign expenses from one category to another', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: 'OldCat', newCategory: 'Uncategorized' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.updated).toBe(3);
+        expect(body.message).toContain('OldCat');
+        expect(body.message).toContain('Uncategorized');
+        expect(mockPrepare).toHaveBeenCalledWith('UPDATE expense SET Category = ? WHERE Category = ?');
+        expect(mockBind).toHaveBeenCalledWith('Uncategorized', 'OldCat');
+    });
+
+    it('should return 400 for missing fields', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, {});
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
+    });
+
+    it('should return 400 for empty oldCategory', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: '', newCategory: 'Uncategorized' });
+        const response = await worker.fetch(request, mockEnv);
+        expect(response.status).toBe(400);
     });
 });
 

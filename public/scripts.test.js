@@ -44,6 +44,8 @@ function buildHTML() {
     </table>
     </div>
 
+    <div id="expense-card-list"></div>
+
     <canvas id="expense-chart"></canvas>
     <canvas id="burndown-chart"></canvas>
 
@@ -812,5 +814,95 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     cleanup();
   });
+
+  it('renders expense cards with category dot, amount, description, date, and icon buttons', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const cardList = document.getElementById('expense-card-list');
+    expect(cardList).toBeTruthy();
+
+    const cards = cardList.querySelectorAll('.expense-card');
+    expect(cards.length).toBe(SAMPLE_EXPENSES.length);
+
+    cards.forEach((card, index) => {
+      // Row 1: Category dot + name on left, amount on right
+      const row1 = card.querySelector('.card-row-1');
+      expect(row1).toBeTruthy();
+
+      const categoryEl = row1.querySelector('.card-category');
+      expect(categoryEl).toBeTruthy();
+      const dot = categoryEl.querySelector('.category-dot');
+      expect(dot).toBeTruthy();
+      expect(dot.style.backgroundColor).toBeTruthy();
+      const catName = categoryEl.querySelector('.card-category-name');
+      expect(catName).toBeTruthy();
+      expect(catName.textContent.trim()).toBe(SAMPLE_EXPENSES[index].category);
+
+      const amountEl = row1.querySelector('.card-amount');
+      expect(amountEl).toBeTruthy();
+      expect(amountEl.classList.contains('fw-bold')).toBe(true);
+
+      // Row 2: Description on left, date on right
+      const row2 = card.querySelector('.card-row-2');
+      expect(row2).toBeTruthy();
+      const descEl = row2.querySelector('.card-description');
+      expect(descEl).toBeTruthy();
+      expect(descEl.classList.contains('text-muted')).toBe(true);
+      expect(descEl.textContent.trim()).toBe(SAMPLE_EXPENSES[index].description);
+      const dateEl = row2.querySelector('.card-date');
+      expect(dateEl).toBeTruthy();
+      expect(dateEl.classList.contains('small')).toBe(true);
+      expect(dateEl.textContent.trim()).toBe(SAMPLE_EXPENSES[index].date);
+
+      // Row 3: Edit and Delete buttons right-aligned
+      const row3 = card.querySelector('.card-row-3');
+      expect(row3).toBeTruthy();
+      expect(row3.classList.contains('text-end')).toBe(true);
+
+      const editBtn = row3.querySelector('.btn-outline-secondary');
+      expect(editBtn).toBeTruthy();
+      expect(editBtn.title).toBe('Edit expense');
+      expect(editBtn.getAttribute('aria-label')).toBe('Edit expense');
+      expect(editBtn.querySelector('.bi-pencil')).toBeTruthy();
+
+      const deleteBtn = row3.querySelector('.btn-outline-danger');
+      expect(deleteBtn).toBeTruthy();
+      expect(deleteBtn.title).toBe('Delete expense');
+      expect(deleteBtn.getAttribute('aria-label')).toBe('Delete expense');
+      expect(deleteBtn.querySelector('.bi-trash3')).toBeTruthy();
+    });
+
+    cleanup();
+  });
+
+  it('clears card list when re-rendering', async () => {
+    const { document, app, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const cardList = document.getElementById('expense-card-list');
+    expect(cardList.querySelectorAll('.expense-card').length).toBe(SAMPLE_EXPENSES.length);
+
+    // Re-render with empty data
+    app.renderExpenses([]);
+    expect(cardList.querySelectorAll('.expense-card').length).toBe(0);
+
+    cleanup();
+  });
+
+  it('has card list present on desktop with rendered cards', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const cardList = document.getElementById('expense-card-list');
+    expect(cardList).toBeTruthy();
+    expect(cardList.querySelectorAll('.expense-card').length).toBeGreaterThan(0);
+
+    cleanup();
+  });
+
 
 });

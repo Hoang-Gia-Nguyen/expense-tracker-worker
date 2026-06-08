@@ -349,7 +349,9 @@ export function createExpenseTrackerApp(domElements) {
     }
 
     function renderExpenses(data) {
-        expenseList.innerHTML = '';
+        expenseList.innerHTML = "";
+        const cardList = document.getElementById("expense-card-list");
+        if (cardList) cardList.innerHTML = "";
 
         data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -365,19 +367,19 @@ export function createExpenseTrackerApp(domElements) {
         const categoryColors = getCategoryColors();
 
         for (const date in groupedExpenses) {
-            const separatorRow = document.createElement('tr');
-            separatorRow.className = 'date-separator';
-            separatorRow.style.position = 'sticky';
-            separatorRow.style.top = '0';
+            const separatorRow = document.createElement("tr");
+            separatorRow.className = "date-separator";
+            separatorRow.style.position = "sticky";
+            separatorRow.style.top = "0";
             separatorRow.innerHTML = `<td colspan="4">${date}</td>`;
             expenseList.appendChild(separatorRow);
 
             groupedExpenses[date].forEach((expense) => {
-                const color = categoryColors[expense.category] || '#808080';
-                const row = document.createElement('tr');
-                row.className = 'expense-row';
+                const color = categoryColors[expense.category] || "#808080";
+                const row = document.createElement("tr");
+                row.className = "expense-row";
                 row.innerHTML = `
-                    <td class="text-end fw-bold amount-cell" style="font-size:1.1em;font-variant-numeric:tabular-nums">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
+                    <td class="text-end fw-bold amount-cell" style="font-size:1.1em;font-variant-numeric:tabular-nums">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</td>
                     <td>${expense.description}</td>
                     <td><span class="category-dot" style="background-color:${color}"></span>${expense.category}</td>
                     <td class="actions-cell">
@@ -386,6 +388,30 @@ export function createExpenseTrackerApp(domElements) {
                     </td>
                 `;
                 expenseList.appendChild(row);
+
+                if (cardList) {
+                    const card = document.createElement("div");
+                    card.className = "expense-card";
+                    card.dataset.id = expense.rowid;
+                    card.innerHTML = `
+                        <div class="card-row-1">
+                            <div class="card-category">
+                                <span class="category-dot" style="background-color:${color}"></span>
+                                <span class="card-category-name">${expense.category}</span>
+                            </div>
+                            <div class="card-amount fw-bold">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</div>
+                        </div>
+                        <div class="card-row-2">
+                            <div class="card-description text-muted">${expense.description}</div>
+                            <div class="card-date small">${expense.date}</div>
+                        </div>
+                        <div class="card-row-3 text-end">
+                            <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" data-id="${expense.rowid}" title="Delete expense" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    `;
+                    cardList.appendChild(card);
+                }
             });
         }
     }
@@ -627,6 +653,19 @@ export function createExpenseTrackerApp(domElements) {
             modifyExpense({ target: btn });
         }
     });
+
+    const cardListEl = document.getElementById('expense-card-list');
+    if (cardListEl) {
+        cardListEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            if (btn.classList.contains('btn-outline-danger') || btn.classList.contains('btn-danger')) {
+                deleteExpense({ target: btn });
+            } else if (btn.classList.contains('btn-outline-secondary') || btn.classList.contains('btn-info')) {
+                modifyExpense({ target: btn });
+            }
+        });
+    }
     confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
     confirmModifyBtn.addEventListener('click', handleConfirmModify);
 

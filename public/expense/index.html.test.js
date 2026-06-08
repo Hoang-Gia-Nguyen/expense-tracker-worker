@@ -66,4 +66,11 @@ describe('index.html structure', () => {
     const script = document.querySelector('script[type="module"][src="/settings.js"]');
     expect(script).not.toBeNull();
   });
+
+  it('contains the expense-card-list container', () => {
+    const cardList = document.getElementById('expense-card-list');
+    expect(cardList).toBeTruthy();
+    expect(cardList.tagName).toBe('DIV');
+    expect(cardList.id).toBe('expense-card-list');
+  });
 });

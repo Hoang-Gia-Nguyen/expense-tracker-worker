@@ -201,3 +201,87 @@ body {
     background-color: var(--bs-border-color);
     border-radius: 3px;
 }
+
+/* ── Mobile Expense Cards ── */
+#expense-card-list {
+    display: none;
+}
+
+.expense-card {
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 12px;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.expense-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-row-1,
+.card-row-2,
+.card-row-3 {
+    display: flex;
+    align-items: center;
+}
+
+.card-row-1 {
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.card-row-2 {
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.card-row-3 {
+    justify-content: flex-end;
+}
+
+.card-category {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-category-name {
+    font-size: 0.9em;
+}
+
+.card-amount {
+    font-size: 1.1em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.card-description {
+    font-size: 0.9em;
+    color: var(--bs-secondary-color);
+}
+
+.card-date {
+    font-size: 0.8em;
+    color: var(--bs-secondary-color);
+}
+
+/* ── Mobile Breakpoint ── */
+@media (max-width: 767.98px) {
+    .table-responsive {
+        display: none;
+    }
+
+    #expense-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (min-width: 768px) {
+    #expense-card-list {
+        display: none !important;
+    }
+}

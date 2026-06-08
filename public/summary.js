@@ -2,6 +2,7 @@
  * Summary page logic - fetches and displays comprehensive monthly summary
  */
 
+import { applyThemeToChart } from './chartTheme.js';
 const apiBase = '/api/summary';
 
 // Category colors for charts - dynamic palette for any category
@@ -238,6 +239,7 @@ export function createSummaryApp(dom) {
                 }
             });
             charts.push(chart);
+            applyThemeToChart(chart);
         } catch (err) {
             console.error('Error rendering doughnut chart:', err);
         }
@@ -313,6 +315,7 @@ export function createSummaryApp(dom) {
             }
         });
         charts.push(chart);
+        applyThemeToChart(chart);
     }
 
     // ===== Category Line Charts (original 4 categories) =====
@@ -413,6 +416,7 @@ export function createSummaryApp(dom) {
                 }
             });
             charts.push(chart);
+            applyThemeToChart(chart);
         });
     }
 
@@ -483,6 +487,7 @@ export function createSummaryApp(dom) {
                 }
             });
             charts.push(chart);
+            applyThemeToChart(chart);
         } catch (err) {
             console.error('Error rendering comparison chart:', err);
         }
@@ -614,6 +619,7 @@ export function createSummaryApp(dom) {
                 }
             });
             charts.push(monthlyChart);
+            applyThemeToChart(monthlyChart);
 
             // Category doughnut chart for YTD
             const catLabels = data.categoryBreakdown.map(c => c.category);
@@ -652,6 +658,7 @@ export function createSummaryApp(dom) {
                 }
             });
             charts.push(catChart);
+            applyThemeToChart(catChart);
         } catch (err) {
             console.error('Error rendering YTD:', err);
         }
@@ -702,5 +709,10 @@ export function createSummaryApp(dom) {
         await fetchAndRender(defaultMonth.yearMonth);
     }
 
+
+    // Listen for theme changes to update chart colors without re-fetching
+    window.addEventListener('theme-changed', function() {
+      charts.forEach(function(chart) { applyThemeToChart(chart); });
+    });
     return { init, fetchAndRender };
 }

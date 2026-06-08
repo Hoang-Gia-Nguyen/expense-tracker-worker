@@ -1,8 +1,9 @@
 import {
   getCategories, getCategoryOrder, getCategoryColors,
   getBudgets, getTotalBudget, getStartOfMonthCategories,
-  populateCategorySelect, initSettings, openSettingsModal, toggleTheme, toggleTheme,
+  populateCategorySelect, initSettings, openSettingsModal, toggleTheme,
 } from './settings.js';
+import { applyThemeToChart } from './chartTheme.js';
 
 const apiUrl = '/api/expense';
 let monthlyBudgetFn = () => getBudgets();
@@ -131,6 +132,7 @@ export function createExpenseTrackerApp(domElements) {
                 }
             }
         });
+        applyThemeToChart(expenseChart);
     }
     function renderBurndownChart(data) {
         const [year, month] = monthPicker.value.split('-');
@@ -207,6 +209,7 @@ export function createExpenseTrackerApp(domElements) {
                 }
             }
         });
+        applyThemeToChart(burndownChart);
     }
 
     function renderSummaries(data) {
@@ -628,6 +631,12 @@ export function createExpenseTrackerApp(domElements) {
     fetchExpensesForMonth();
     checkFormValidity();
 
+
+    // Listen for theme changes to update chart colors without re-fetching
+    window.addEventListener('theme-changed', function() {
+      applyThemeToChart(expenseChart);
+      applyThemeToChart(burndownChart);
+    });
     return {
         fetchExpensesForMonth,
         addExpense,

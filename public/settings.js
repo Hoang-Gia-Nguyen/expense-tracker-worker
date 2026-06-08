@@ -35,6 +35,7 @@ const DEFAULT_SETTINGS = {
   },
   categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other', 'Uncategorized'],
   startOfMonthCategories: ['Home', 'Baby'],
+  theme: 'light',
 };
 
 const COLOR_PALETTE = [

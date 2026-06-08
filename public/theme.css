@@ -1,0 +1,30 @@
+/* Theme CSS — overrides Bootstrap CSS custom properties for light/dark modes */
+/* Applied via data-bs-theme attribute on <html> */
+
+/* ── Light theme (default) ── */
+[data-bs-theme="light"] {
+  --bs-primary: #1E3A5F;
+  --bs-primary-rgb: 30, 58, 95;
+  --bs-secondary: #2563EB;
+  --bs-secondary-rgb: 37, 99, 235;
+  --bs-success: #059669;
+  --bs-success-rgb: 5, 150, 105;
+  --bs-body-bg: #F8FAFC;
+  --bs-body-color: #0F172A;
+  --bs-border-color: #E2E8F0;
+  --bs-surface-bg: #FFFFFF;
+}
+
+/* ── Dark theme ── */
+[data-bs-theme="dark"] {
+  --bs-primary: #0F172A;
+  --bs-primary-rgb: 15, 23, 42;
+  --bs-secondary: #3B82F6;
+  --bs-secondary-rgb: 59, 130, 246;
+  --bs-success: #10B981;
+  --bs-success-rgb: 16, 185, 129;
+  --bs-body-bg: #0F172A;
+  --bs-body-color: #F1F5F9;
+  --bs-border-color: rgba(255, 255, 255, 0.08);
+  --bs-surface-bg: #1E293B;
+}

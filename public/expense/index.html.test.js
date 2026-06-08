@@ -52,9 +52,12 @@ describe('index.html structure', () => {
     expect(document.getElementById('burndown-chart')).not.toBeNull();
   });
 
-  it('renders navigation links and settings button', () => {
+  it('renders navigation links, theme toggle, and settings button', () => {
     const navLinks = Array.from(document.querySelectorAll('nav .nav-link')).map(a => a.getAttribute('href'));
     expect(navLinks).toEqual(['/expense', '/summary', '/insights']);
+    const themeToggle = document.getElementById('theme-toggle-btn');
+    expect(themeToggle).toBeTruthy();
+    expect(themeToggle.querySelector('i').classList.contains('bi-sun-fill')).toBe(true);
     const settingsBtn = document.getElementById('settings-btn');
     expect(settingsBtn).toBeTruthy();
   });
@@ -62,5 +65,12 @@ describe('index.html structure', () => {
   it('includes the settings.js module script', () => {
     const script = document.querySelector('script[type="module"][src="/settings.js"]');
     expect(script).not.toBeNull();
+  });
+
+  it('contains the expense-card-list container', () => {
+    const cardList = document.getElementById('expense-card-list');
+    expect(cardList).toBeTruthy();
+    expect(cardList.tagName).toBe('DIV');
+    expect(cardList.id).toBe('expense-card-list');
   });
 });

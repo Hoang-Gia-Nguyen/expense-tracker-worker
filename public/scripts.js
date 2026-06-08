@@ -1,8 +1,9 @@
 import {
   getCategories, getCategoryOrder, getCategoryColors,
   getBudgets, getTotalBudget, getStartOfMonthCategories,
-  populateCategorySelect, initSettings, openSettingsModal,
+  populateCategorySelect, initSettings, openSettingsModal, toggleTheme,
 } from './settings.js';
+import { applyThemeToChart } from './chartTheme.js';
 
 const apiUrl = '/api/expense';
 let monthlyBudgetFn = () => getBudgets();
@@ -131,6 +132,7 @@ export function createExpenseTrackerApp(domElements) {
                 }
             }
         });
+        applyThemeToChart(expenseChart);
     }
     function renderBurndownChart(data) {
         const [year, month] = monthPicker.value.split('-');
@@ -207,6 +209,7 @@ export function createExpenseTrackerApp(domElements) {
                 }
             }
         });
+        applyThemeToChart(burndownChart);
     }
 
     function renderSummaries(data) {
@@ -346,12 +349,12 @@ export function createExpenseTrackerApp(domElements) {
     }
 
     function renderExpenses(data) {
-        expenseList.innerHTML = '';
+        expenseList.innerHTML = "";
+        const cardList = document.getElementById("expense-card-list");
+        if (cardList) cardList.innerHTML = "";
 
-        // Sort expenses by date in descending order
         data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Group expenses by date
         const groupedExpenses = data.reduce((acc, expense) => {
             const date = expense.date;
             if (!acc[date]) {
@@ -361,27 +364,54 @@ export function createExpenseTrackerApp(domElements) {
             return acc;
         }, {});
 
-        // Render expenses with date separators
+        const categoryColors = getCategoryColors();
+
         for (const date in groupedExpenses) {
-            // Add a date separator row
-            const separatorRow = document.createElement('tr');
-            separatorRow.classList.add('date-separator');
-            separatorRow.innerHTML = `<td colspan="5">${date}</td>`;
+            const separatorRow = document.createElement("tr");
+            separatorRow.className = "date-separator";
+            separatorRow.style.position = "sticky";
+            separatorRow.style.top = "0";
+            separatorRow.innerHTML = `<td colspan="4">${date}</td>`;
             expenseList.appendChild(separatorRow);
 
-            // Add expense rows for that date
             groupedExpenses[date].forEach((expense) => {
-                const row = document.createElement('tr');
+                const color = categoryColors[expense.category] || "#808080";
+                const row = document.createElement("tr");
+                row.className = "expense-row";
                 row.innerHTML = `
-                    <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
+                    <td class="text-end fw-bold amount-cell" style="font-size:1.1em;font-variant-numeric:tabular-nums">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</td>
                     <td>${expense.description}</td>
-                    <td>${expense.category}</td>
+                    <td><span class="category-dot" style="background-color:${color}"></span>${expense.category}</td>
                     <td class="actions-cell">
-                        <button class="btn btn-info btn-sm" data-id="${expense.rowid}">Modify</button>
-                        <button class="btn btn-danger btn-sm" data-id="${expense.rowid}">Delete</button>
+                        <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm" data-id="${expense.rowid}" title="Delete expense" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
                     </td>
                 `;
                 expenseList.appendChild(row);
+
+                if (cardList) {
+                    const card = document.createElement("div");
+                    card.className = "expense-card";
+                    card.dataset.id = expense.rowid;
+                    card.innerHTML = `
+                        <div class="card-row-1">
+                            <div class="card-category">
+                                <span class="category-dot" style="background-color:${color}"></span>
+                                <span class="card-category-name">${expense.category}</span>
+                            </div>
+                            <div class="card-amount fw-bold">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</div>
+                        </div>
+                        <div class="card-row-2">
+                            <div class="card-description text-muted">${expense.description}</div>
+                            <div class="card-date small">${expense.date}</div>
+                        </div>
+                        <div class="card-row-3 text-end">
+                            <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" data-id="${expense.rowid}" title="Delete expense" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    `;
+                    cardList.appendChild(card);
+                }
             });
         }
     }
@@ -407,7 +437,7 @@ export function createExpenseTrackerApp(domElements) {
                 applyFilter(); // Apply the current filter to the transaction list
             } else {
                 console.error('Failed to fetch expenses:', await response.text());
-                expenseList.innerHTML = '<tr><td colspan="5" class="text-center">Error loading data.</td></tr>';
+                expenseList.innerHTML = '<tr><td colspan="4" class="text-center">Error loading data.</td></tr>';
                 totalSummaryDiv.innerHTML = '';
                 dailySpendingSummaryDiv.innerHTML = '';
                 startOfMonthSummaryDiv.innerHTML = '';
@@ -416,7 +446,7 @@ export function createExpenseTrackerApp(domElements) {
             }
         } catch (error) {
             console.error('Error fetching expenses:', error);
-            expenseList.innerHTML = '<tr><td colspan="5" class="text-center">Could not connect to the server.</td></tr>';
+            expenseList.innerHTML = '<tr><td colspan="4" class="text-center">Could not connect to the server.</td></tr>';
             totalSummaryDiv.innerHTML = '';
             dailySpendingSummaryDiv.innerHTML = '';
             startOfMonthSummaryDiv.innerHTML = '';
@@ -525,7 +555,7 @@ export function createExpenseTrackerApp(domElements) {
     }
 
     async function deleteExpense(e) {
-        if (!e.target.classList.contains('btn-danger')) return;
+        if (!e.target.classList.contains('btn-danger') && !e.target.classList.contains('btn-outline-danger')) return;
 
         const expenseId = e.target.getAttribute('data-id');
         const expenseToDelete = allExpensesForMonth.find(exp => exp.rowid == expenseId);
@@ -615,12 +645,27 @@ export function createExpenseTrackerApp(domElements) {
     categoryFilter.addEventListener('change', applyFilter); // Just apply the filter locally
     expenseForm.addEventListener('submit', addExpense);
     expenseList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-danger')) {
-            deleteExpense(e);
-        } else if (e.target.classList.contains('btn-info')) {
-            modifyExpense(e);
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.classList.contains('btn-outline-danger') || btn.classList.contains('btn-danger')) {
+            deleteExpense({ target: btn });
+        } else if (btn.classList.contains('btn-outline-secondary') || btn.classList.contains('btn-info')) {
+            modifyExpense({ target: btn });
         }
     });
+
+    const cardListEl = document.getElementById('expense-card-list');
+    if (cardListEl) {
+        cardListEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            if (btn.classList.contains('btn-outline-danger') || btn.classList.contains('btn-danger')) {
+                deleteExpense({ target: btn });
+            } else if (btn.classList.contains('btn-outline-secondary') || btn.classList.contains('btn-info')) {
+                modifyExpense({ target: btn });
+            }
+        });
+    }
     confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
     confirmModifyBtn.addEventListener('click', handleConfirmModify);
 
@@ -628,6 +673,12 @@ export function createExpenseTrackerApp(domElements) {
     fetchExpensesForMonth();
     checkFormValidity();
 
+
+    // Listen for theme changes to update chart colors without re-fetching
+    window.addEventListener('theme-changed', function() {
+      applyThemeToChart(expenseChart);
+      applyThemeToChart(burndownChart);
+    });
     return {
         fetchExpensesForMonth,
         addExpense,
@@ -651,6 +702,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize settings system
     initSettings();
     document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
+    // Set initial theme icon
+    const initialSettings = Object.assign({ theme: 'light' }, JSON.parse(localStorage.getItem('expense_tracker_settings') || '{}'));
+    const initIcon = document.querySelector('#theme-toggle-btn i');
+    if (initIcon) {
+      initIcon.className = initialSettings.theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+    }
 
     // Populate category dropdowns from settings
     populateCategorySelect(document.getElementById('category'), { placeholder: 'Select a category' });

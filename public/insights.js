@@ -2,6 +2,8 @@
  * Insights page logic - fetches and displays spending insights
  */
 
+import { applyThemeToChart } from './chartTheme.js';
+
 // Format currency in VND
 function formatCurrency(amount) {
   return new Intl.NumberFormat('vi-VN', {
@@ -200,6 +202,7 @@ export function createInsightsApp(elements) {
         chartInstance.destroy();
       }
       chartInstance = createDailySpendingChart(elements.dailyChart, data.dailySeries);
+      applyThemeToChart(chartInstance);
       
       // Render other sections
       renderDailySpikes(elements.dailySpikesContent, data.dailySpikes);
@@ -217,6 +220,11 @@ export function createInsightsApp(elements) {
     }
   }
   
+
+  // Listen for theme changes to update chart colors without re-fetching
+  window.addEventListener('theme-changed', function() {
+    applyThemeToChart(chartInstance);
+  });
   return {
     fetchAndRender
   };

@@ -35,6 +35,7 @@ const DEFAULT_SETTINGS = {
   },
   categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other', 'Uncategorized'],
   startOfMonthCategories: ['Home', 'Baby'],
+  theme: 'light',
 };
 
 const COLOR_PALETTE = [
@@ -231,6 +232,11 @@ const SETTINGS_MODAL_HTML = `
               <i class="bi bi-piggy-bank-fill"></i> Budgets
             </button>
           </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="preferences-tab" data-bs-toggle="tab" data-bs-target="#preferences-panel" type="button" role="tab" aria-controls="preferences-panel" aria-selected="false">
+              <i class="bi bi-palette-fill"></i> Preferences
+            </button>
+          </li>
         </ul>
 
         <div class="tab-content" id="settings-tab-content">
@@ -255,6 +261,25 @@ const SETTINGS_MODAL_HTML = `
             <hr>
             <h6>Per-Category Budgets (VND)</h6>
             <div id="settings-budget-list"></div>
+          </div>
+          <!-- Preferences Panel -->
+          <div class="tab-pane fade" id="preferences-panel" role="tabpanel" aria-labelledby="preferences-tab">
+            <h6>Theme</h6>
+            <p class="text-muted small">Choose between light and dark appearance.</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="settings-theme" id="theme-light" value="light">
+                <label class="form-check-label" for="theme-light">
+                  <i class="bi bi-sun-fill"></i> Light
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="settings-theme" id="theme-dark" value="dark">
+                <label class="form-check-label" for="theme-dark">
+                  <i class="bi bi-moon-fill"></i> Dark
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -338,6 +363,12 @@ export function openSettingsModal() {
     .join('');
 
   document.getElementById('settings-total-budget').value = settings.totalBudget;
+
+  // Set theme radio buttons based on current settings
+  const themeRadios = document.querySelectorAll('input[name="settings-theme"]');
+  themeRadios.forEach(function(radio) {
+    radio.checked = radio.value === settings.theme;
+  });
 
   // Show modal
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -553,6 +584,31 @@ export function initSettingsModal() {
 
   totalBudgetInput.addEventListener('change', saveBudgetInputs);
 
+  // Theme toggle in Preferences panel
+  const themeRadios = document.querySelectorAll('input[name="settings-theme"]');
+  themeRadios.forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      if (this.checked) {
+        // Use toggleTheme to switch - it reads current state and toggles
+        // But we want to set a specific theme, not toggle
+        const settings = loadSettings();
+        settings.theme = this.value;
+        saveSettings(settings);
+        document.documentElement.setAttribute('data-bs-theme', this.value);
+        // Update navbar toggle icon
+        const toggleBtn = document.getElementById('theme-toggle-btn');
+        if (toggleBtn) {
+          const icon = toggleBtn.querySelector('i');
+          if (icon) {
+            icon.className = this.value === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+          }
+          toggleBtn.title = this.value === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        }
+        window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: this.value } }));
+      }
+    });
+  });
+
   // Save settings button
   saveBtn.addEventListener('click', () => {
     saveBudgetInputs();
@@ -581,4 +637,32 @@ export function injectSettingsModal() {
 export function initSettings() {
   injectSettingsModal();
   initSettingsModal();
+}
+
+/**
+ * Toggle between light and dark theme.
+ * Updates the data-bs-theme attribute on <html>, persists via saveSettings(),
+ * and updates the navbar toggle icon.
+ */
+export function toggleTheme() {
+  const settings = loadSettings();
+  const newTheme = settings.theme === 'dark' ? 'light' : 'dark';
+  settings.theme = newTheme;
+  saveSettings(settings);
+
+  // Update <html> attribute
+  document.documentElement.setAttribute('data-bs-theme', newTheme);
+
+  // Update toggle button icon if present
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  if (toggleBtn) {
+    const icon = toggleBtn.querySelector('i');
+    if (icon) {
+      icon.className = newTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+    }
+    toggleBtn.title = newTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+  }
+
+  // Dispatch a custom event so other components can react
+  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
 }

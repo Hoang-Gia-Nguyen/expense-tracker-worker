@@ -1,83 +1,135 @@
-/* Add your custom styles here */
-
-/* Table Styles for better clarity and modern look */
-.table {
-    border-collapse: collapse; /* Use collapse for cleaner lines */
-    width: 100%;
-    border: 1px solid #dee2e6; /* Add a border to the whole table */
+/* ── Base Typography ── */
+body {
+    font-family: "Inter", sans-serif;
 }
 
-/* Style for table header */
+/* ── Table Styles ── */
+.table {
+    border-collapse: collapse;
+    width: 100%;
+    border: none;
+}
+
+/* Table header */
 .table thead th {
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
+    background-color: var(--bs-body-bg);
+    border-bottom: 2px solid var(--bs-border-color);
     text-align: center;
     font-weight: 600;
-    padding: 0.9rem;
+    padding: 0.9rem 0.75rem;
+    border-left: none;
+    border-right: none;
 }
 
-/* Style for all table body rows - now all white */
+/* Table body rows */
 .table tbody tr {
-    background-color: #ffffff;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.15s ease-in-out;
 }
 
-/* Remove the striping */
+/* Remove striping */
 .table-striped tbody tr:nth-of-type(odd) {
-    background-color: #ffffff;
+    background-color: transparent;
 }
 
-/* A slightly more noticeable hover effect on the white rows */
+/* Subtle hover on rows */
 .table-hover tbody tr:hover {
-    background-color: #f1f3f5; /* A very light grey for hover */
-    cursor: pointer;
+    background-color: rgba(var(--bs-primary-rgb), 0.04);
 }
 
-/* Cell padding and borders */
+/* Table wrapper for horizontal scroll on mobile */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Table cells — only subtle horizontal dividers, no vertical borders */
 .table td, .table th {
-    padding: 0.9rem;
+    padding: 1rem 0.75rem;
     vertical-align: middle;
-    border: 1px solid #dee2e6; /* Use a consistent border for all cells */
+    border: none;
+    border-bottom: 1px solid var(--bs-border-color);
 }
 
-/* Highlighted Date separator style */
+/* Date separator — sticky, soft background, semibold date */
+.date-separator {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
 .date-separator td {
-    background-color: #0d6efd; /* Bootstrap primary blue for highlighting */
-    color: #ffffff; /* White text for contrast */
-    font-weight: bold;
-    text-align: center; /* Center align the date */
-    padding: 0.75rem; /* Adjust padding */
-    border: 1px solid #0d6efd;
+    background-color: var(--bs-tertiary-bg);
+    font-weight: 600;
+    border-top: 2px solid var(--bs-border-color);
+    border-bottom: 2px solid var(--bs-border-color);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
 }
 
-/* Actions column style */
+/* Expense row hover */
+.expense-row {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.expense-row:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.04);
+}
+
+/* Category color dot */
+.category-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Actions column */
 .actions-cell {
-    width: 1%; /* Allow the cell to shrink to content */
-    white-space: nowrap; /* Prevent buttons from wrapping */
+    width: 1%;
+    white-space: nowrap;
     text-align: center;
 }
 
-/* Modify button style - changed to warning/yellow for high contrast */
-.btn-info {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #000; /* Black text for better readability on yellow */
+/* Amount cell — tabular-nums for perfect digit alignment */
+.amount-cell {
+    font-variant-numeric: tabular-nums;
 }
 
-.btn-info:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
+/* ── Card Styles ── */
+.card {
+    transition: box-shadow 0.2s ease-in-out, transform 0.15s ease-in-out;
 }
 
-/* Responsive chart containers prioritize mobile view */
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Button Styles ── */
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+    background-color: var(--bs-secondary);
+    border-color: var(--bs-emphasis-color);
+}
+
+.btn-success {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+/* ── Chart Containers ── */
 .chart-container {
     position: relative;
     width: 100%;
     height: 300px;
 }
 
-
-/* Settings Modal Styles */
+/* ── Settings Modal ── */
 #settings-modal .modal-dialog {
     max-width: 600px;
 }
@@ -87,7 +139,7 @@
 }
 
 #settings-modal .settings-category-row:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bs-body-bg);
 }
 
 #settings-modal .settings-category-row .form-control-color {
@@ -99,7 +151,7 @@
 }
 
 #settings-modal .settings-category-row .form-control-color::-webkit-color-swatch {
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--bs-border-color);
     border-radius: 4px;
 }
 
@@ -109,10 +161,127 @@
 }
 
 #settings-modal .nav-tabs .nav-link {
-    color: #495057;
+    color: var(--bs-body-color);
 }
 
 #settings-modal .nav-tabs .nav-link.active {
     font-weight: 600;
-    color: #0d6efd;
+    color: var(--bs-emphasis-color);
+}
+
+/* ── Focus Visible Rings ── */
+:focus-visible {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* ── Emerald Accent for Success / Positive States ── */
+.text-success,
+.budget-surplus {
+    color: var(--bs-success) !important;
+}
+
+.btn-emerald {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+    color: #ffffff;
+}
+
+.btn-emerald:hover {
+    background-color: #047857;
+    border-color: #047857;
+}
+
+/* ── Smooth scroll for table containers on mobile ── */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: var(--bs-border-color);
+    border-radius: 3px;
+}
+
+/* ── Mobile Expense Cards ── */
+#expense-card-list {
+    display: none;
+}
+
+.expense-card {
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 12px;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.expense-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-row-1,
+.card-row-2,
+.card-row-3 {
+    display: flex;
+    align-items: center;
+}
+
+.card-row-1 {
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.card-row-2 {
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.card-row-3 {
+    justify-content: flex-end;
+}
+
+.card-category {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-category-name {
+    font-size: 0.9em;
+}
+
+.card-amount {
+    font-size: 1.1em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.card-description {
+    font-size: 0.9em;
+    color: var(--bs-secondary-color);
+}
+
+.card-date {
+    font-size: 0.8em;
+    color: var(--bs-secondary-color);
+}
+
+/* ── Mobile Breakpoint ── */
+@media (max-width: 767.98px) {
+    .table-responsive {
+        display: none;
+    }
+
+    #expense-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (min-width: 768px) {
+    #expense-card-list {
+        display: none !important;
+    }
 }

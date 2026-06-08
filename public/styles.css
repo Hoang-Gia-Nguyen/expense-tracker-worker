@@ -55,7 +55,7 @@ body {
 
 /* Date separator */
 .date-separator td {
-    background-color: var(--bs-emphasis-color);
+    background-color: var(--bs-secondary);
     color: #ffffff;
     font-weight: bold;
     text-align: center;
@@ -97,7 +97,7 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--bs-emphasis-color);
+    background-color: var(--bs-secondary);
     border-color: var(--bs-emphasis-color);
 }
 

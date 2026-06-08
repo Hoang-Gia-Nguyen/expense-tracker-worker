@@ -38,6 +38,9 @@ describe('static asset handling', () => {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},
       waitUntil: vi.fn(),
+      LOGGING_HABIT: {
+        writeDataPoint: vi.fn(),
+      },
       D1_DATABASE: {
         prepare: vi.fn(() => ({
           bind: () => ({ all: vi.fn().mockResolvedValue({ results: [] }) })
@@ -57,6 +60,9 @@ describe('static asset handling', () => {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},
       waitUntil: vi.fn(),
+      LOGGING_HABIT: {
+        writeDataPoint: vi.fn(),
+      },
       D1_DATABASE: {
         prepare: vi.fn(() => ({
           bind: () => ({ all: vi.fn().mockResolvedValue({ results: [] }) })

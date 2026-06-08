@@ -7,7 +7,7 @@ export default defineConfig({
     hookTimeout: 60000,
     coverage: {
       provider: 'v8',
-      include: ['public/scripts.js', 'public/settings.js', 'index.js'],
+      include: ['public/scripts.js', 'public/settings.js', 'index.js'], // Include scripts.js and index.js for coverage
     },
   },
   server: {

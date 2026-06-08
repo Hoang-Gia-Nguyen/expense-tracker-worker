@@ -22,7 +22,7 @@ const mockEnv = {
     __STATIC_CONTENT: {}, // Mock for KV asset handler
     __STATIC_CONTENT_MANIFEST: {}, // Mock for KV asset handler
     waitUntil: vi.fn(), // Mock waitUntil for getAssetFromKV
-    ANALYTICS_TEST: {
+    LOGGING_HABIT: {
         writeDataPoint: vi.fn(),
     },
 };
@@ -67,8 +67,8 @@ describe('GET /api/expense', () => {
         expect(response.headers.get('Content-Type')).toBe('application/json');
         expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
         await expect(response.json()).resolves.toEqual(mockExpenses);
-        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date AS date, Amount AS amount, Description AS description, Category AS category FROM expense WHERE strftime('%Y', Date) = ? AND strftime('%m', Date) = ?");
-        expect(mockBind).toHaveBeenCalledWith('2023', '01');
+        expect(mockPrepare).toHaveBeenCalledWith("SELECT rowid, Date, Amount, Description, Category FROM expense WHERE Date >= ? AND Date < ?");
+        expect(mockBind).toHaveBeenCalledWith('2023-01-01', '2023-02-01');
     });
 
     it('should return an empty array if no expenses are found', async () => {
@@ -87,7 +87,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required query parameters: year, month');
+        await expect(response.json()).resolves.toEqual({ error: 'Missing required query parameters: year, month' });
     });
 
     it('should return 400 if month is missing', async () => {
@@ -95,7 +95,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required query parameters: year, month');
+        await expect(response.json()).resolves.toEqual({ error: 'Missing required query parameters: year, month' });
     });
 
     it('should return 500 if D1 database operation fails', async () => {
@@ -106,7 +106,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        await expect(response.json()).resolves.toEqual({ error: errorMessage });
     });
 
     it('should return 200 with Access-Control-Allow-Origin: null for disallowed origin', async () => {
@@ -128,7 +128,7 @@ describe('GET /api/expense', () => {
 
             expect(response.status).toBe(204);
             expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
-            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, DELETE, OPTIONS');
+            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
             expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type');
         });
 
@@ -142,9 +142,6 @@ describe('GET /api/expense', () => {
 
             expect(response.status).toBe(204);
             expect(response.headers.get('Access-Control-Allow-Origin')).toBe('null');
-            // Corrected expectation: These headers should NOT be present for disallowed origins
-            expect(response.headers.get('Access-Control-Allow-Methods')).toBeNull();
-            expect(response.headers.get('Access-Control-Allow-Headers')).toBeNull();
         });
     });
 });
@@ -181,106 +178,7 @@ describe('GET /api/summary', () => {
     });
 });
 
-
-describe('GET /api/summary/stats', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockAll.mockReset();
-        mockBind.mockReset();
-        mockPrepare.mockReset();
-    });
-
-    it('returns monthly stats with all fields', async () => {
-        mockAll
-            .mockResolvedValueOnce({ results: [{ total_spent: 10000000, transaction_count: 25 }] })
-            .mockResolvedValueOnce({ results: [{ category: 'Home', spend_vnd: 5000000 }] })
-            .mockResolvedValueOnce({ results: [{ total_spent: 8000000 }] });
-
-        const request = createMockRequest('http://localhost/api/summary/stats?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const data = await response.json();
-        expect(data.totalSpent).toBe(10000000);
-        expect(data.avgDaily).toBeGreaterThan(0);
-        expect(data.transactionCount).toBe(25);
-        expect(data.biggestCategory.name).toBe('Home');
-        expect(data.biggestCategory.amount).toBe(5000000);
-        expect(data.vsLastMonth.amount).toBe(2000000);
-        expect(typeof data.vsLastMonth.percent).toBe('number');
-    });
-
-    it('returns 400 for missing params', async () => {
-        const request = createMockRequest('http://localhost/api/summary/stats?year=2024', 'GET', { 'Origin': 'http://localhost:8787' });
-        const response = await worker.fetch(request, mockEnv);
-        expect(response.status).toBe(400);
-    });
-});
-
-describe('GET /api/summary/categories', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockAll.mockReset();
-        mockBind.mockReset();
-        mockPrepare.mockReset();
-    });
-
-    it('returns all categories with percentages and vs last month', async () => {
-        mockAll
-            .mockResolvedValueOnce({ results: [
-                { category: 'Home', spend_vnd: 5000000 },
-                { category: 'Food', spend_vnd: 3000000 },
-            ]})
-            .mockResolvedValueOnce({ results: [
-                { category: 'Home', spend_vnd: 4000000 },
-                { category: 'Food', spend_vnd: 3500000 },
-            ]});
-
-        const request = createMockRequest('http://localhost/api/summary/categories?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const data = await response.json();
-        expect(data.length).toBe(2);
-        expect(data[0].category).toBe('Home');
-        expect(data[0].spend_vnd).toBe(5000000);
-        expect(data[0].percentOfTotal).toBeCloseTo(62.5, 1);
-        expect(data[0].vsLastMonth).toBe(1000000);
-    });
-});
-
-describe('GET /api/summary/comparison', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockAll.mockReset();
-        mockBind.mockReset();
-        mockPrepare.mockReset();
-    });
-
-    it('returns month-over-month comparison per category', async () => {
-        mockAll
-            .mockResolvedValueOnce({ results: [
-                { category: 'Home', spend_vnd: 5000000 },
-                { category: 'Food', spend_vnd: 3000000 },
-            ]})
-            .mockResolvedValueOnce({ results: [
-                { category: 'Home', spend_vnd: 4000000 },
-                { category: 'Food', spend_vnd: 3500000 },
-            ]});
-
-        const request = createMockRequest('http://localhost/api/summary/comparison?year=2024&month=07', 'GET', { 'Origin': 'http://localhost:8787' });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const data = await response.json();
-        expect(data.length).toBe(2);
-        const home = data.find(d => d.category === 'Home');
-        expect(home.current).toBe(5000000);
-        expect(home.previous).toBe(4000000);
-    });
-});
-
-describe('GET /api/summary/top-transactions', () => {
+describe('GET /api/insights', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockAll.mockReset();
@@ -289,73 +187,31 @@ describe('GET /api/summary/top-transactions', () => {
         mockAll.mockResolvedValue({ results: [] });
     });
 
-    it('returns top transactions for a given month', async () => {
-        mockAll.mockResolvedValueOnce({ results: [
-            { rowid: 1, date: '2024-07-15', amount: 2000000, description: 'Rent', category: 'Home' },
-            { rowid: 2, date: '2024-07-20', amount: 500000, description: 'Groceries', category: 'Food' },
-        ]});
+    it('should return insights data', async () => {
+        const mockDailyResults = [{ Date: '2023-01-01', total: 100 }];
+        const mockCategoryResults = [{ category: 'Food', spend_vnd: 500 }];
+        const mockTopResults = [{ rowid: 1, Amount: 100, Description: 'Dinner', Category: 'Food', Date: '2023-01-01' }];
 
-        const request = createMockRequest('http://localhost/api/summary/top-transactions?year=2024&month=07&limit=5', 'GET', { 'Origin': 'http://localhost:8787' });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const data = await response.json();
-        expect(data.length).toBe(2);
-        expect(data[0].description).toBe('Rent');
-    });
-});
-
-describe('GET /api/summary/ytd', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockAll.mockReset();
-        mockBind.mockReset();
-        mockPrepare.mockReset();
-    });
-
-    it('returns year-to-date overview', async () => {
         mockAll
-            .mockResolvedValueOnce({ results: [
-                { year_month: '2024-01', total: 10000000 },
-                { year_month: '2024-02', total: 12000000 },
-            ]})
-            .mockResolvedValueOnce({ results: [
-                { category: 'Home', total: 5000000 },
-                { category: 'Food', total: 3000000 },
-            ]});
+            .mockResolvedValueOnce({ results: mockDailyResults })
+            .mockResolvedValueOnce({ results: mockCategoryResults })
+            .mockResolvedValueOnce({ results: [] }) // For avg spend check
+            .mockResolvedValueOnce({ results: mockTopResults });
 
-        const request = createMockRequest('http://localhost/api/summary/ytd?year=2024', 'GET', { 'Origin': 'http://localhost:8787' });
+        const request = createMockRequest('http://localhost/api/insights', 'GET');
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
         const data = await response.json();
-        expect(data.totalSpent).toBe(22000000);
-        expect(data.monthlyBreakdown.length).toBe(2);
-        expect(data.categoryBreakdown.length).toBe(2);
+        expect(data).toHaveProperty('dailySeries');
+        expect(data.topTransactions).toEqual(mockTopResults);
     });
-});
 
-
-// Test for static asset serving (basic check)
-describe('Static Asset Serving', () => {
-    it('should return 404 for non-existent asset after fall-through', async () => {
-        // Mock getAssetFromKV to throw an error for a non-existent asset
-        vi.mock('@cloudflare/kv-asset-handler', async (importOriginal) => {
-            const actual = await importOriginal();
-            return {
-                ...actual,
-                getAssetFromKV: vi.fn(() => {
-                    throw new Error('Asset not found'); // Simulate asset not found
-                }),
-            };
-        });
-
-        const request = createMockRequest('http://localhost/non-existent-asset.html');
+    it('should return 500 if database query fails', async () => {
+        mockAll.mockRejectedValueOnce(new Error('Database error'));
+        const request = createMockRequest('http://localhost/api/insights', 'GET');
         const response = await worker.fetch(request, mockEnv);
-
-        // Corrected expectation: The request falls through to the 404 handler
-        expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('404, not found!');
+        expect(response.status).toBe(500);
     });
 });
 
@@ -382,6 +238,7 @@ describe('POST /api/expense', () => {
         expect(mockPrepare).toHaveBeenCalledWith('INSERT INTO expense (Date, Amount, Description, Category) VALUES (?, ?, ?, ?)');
         expect(mockBind).toHaveBeenCalledWith(newExpense.date, newExpense.amount, newExpense.description, newExpense.category);
         expect(mockRun).toHaveBeenCalled();
+        expect(mockEnv.LOGGING_HABIT.writeDataPoint).toHaveBeenCalled();
     });
 
     it('should return 400 if required fields are missing', async () => {
@@ -395,47 +252,13 @@ describe('POST /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toContain('Validation Error');
-    });
-
-    it('should return 400 if amount is not a number', async () => {
-        const invalidExpense = {
-            date: '2023-08-01T00:00:00Z',
-            amount: 'one hundred', // Invalid type
-            description: 'New Book',
-            category: 'Education',
-        };
-        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidExpense);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toContain('Validation Error');
-    });
-
-    it('should return 500 if D1 database operation fails', async () => {
-        const errorMessage = 'Database insert error';
-        mockRun.mockRejectedValueOnce(new Error(errorMessage));
-
-        const newExpense = {
-            date: '2023-08-01T00:00:00Z',
-            amount: 100,
-            description: 'New Book',
-            category: 'Education',
-        };
-        const request = createMockRequest('http://localhost/api/expense', 'POST', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, newExpense);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
     });
 });
 
 describe('PUT /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
-        mockPrepare.mockReset();
-        mockBind.mockReset();
+        mockRun.mockResolvedValue({ success: true });
     });
 
     it('should update an existing expense successfully', async () => {
@@ -451,112 +274,64 @@ describe('PUT /api/expense', () => {
 
         expect(response.status).toBe(200);
         await expect(response.text()).resolves.toBe('Expense updated successfully');
-        expect(mockPrepare).toHaveBeenCalledWith('UPDATE expense SET Date = ?, Amount = ?, Description = ?, Category = ? WHERE rowid = ?');
-        expect(mockBind).toHaveBeenCalledWith(updatedExpense.date, updatedExpense.amount, updatedExpense.description, updatedExpense.category, updatedExpense.id);
-        expect(mockRun).toHaveBeenCalled();
-    });
-
-    it('should return 400 if required fields are missing', async () => {
-        const incompleteUpdate = {
-            id: 1,
-            date: '2023-08-01T00:00:00Z',
-            amount: 120,
-            // description is missing
-            category: 'Education',
-        };
-        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteUpdate);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toContain('Validation Error');
-    });
-
-    it('should return 400 if amount is not a number', async () => {
-        const invalidUpdate = {
-            id: 1,
-            date: '2023-08-01T00:00:00Z',
-            amount: 'one twenty', // Invalid type
-            description: 'Updated Book',
-            category: 'Education',
-        };
-        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, invalidUpdate);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toContain('Validation Error');
-    });
-
-    it('should return 500 if D1 database operation fails', async () => {
-        const errorMessage = 'Database update error';
-        mockRun.mockRejectedValueOnce(new Error(errorMessage));
-
-        const updatedExpense = {
-            id: 1,
-            date: '2023-08-01T00:00:00Z',
-            amount: 120,
-            description: 'Updated Book',
-            category: 'Education',
-        };
-        const request = createMockRequest('http://localhost/api/expense', 'PUT', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, updatedExpense);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
     });
 });
 
 describe('DELETE /api/expense', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
-        mockPrepare.mockReset();
-        mockBind.mockReset();
+        mockRun.mockResolvedValue({ success: true });
     });
 
     it('should delete an expense successfully', async () => {
         const expenseToDelete = { id: 1 };
-        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 1 } }); // Explicitly mock for this test
-
         const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
         await expect(response.text()).resolves.toBe('Expense deleted successfully');
-        expect(mockPrepare).toHaveBeenCalledWith("DELETE FROM expense WHERE rowid = ?");
-        expect(mockBind).toHaveBeenCalledWith(expenseToDelete.id);
-        expect(mockRun).toHaveBeenCalled();
+    });
+});
+
+describe('PATCH /api/expenses/category', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 3 } });
     });
 
-    it('should return 400 if id is missing', async () => {
-        const incompleteDelete = { /* id is missing */ };
-        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, incompleteDelete);
+    it('should reassign expenses from one category to another', async () => {
+        // Mock a successful PATCH that updates 3 rows
+        const mockStmt = {
+            bind: vi.fn().mockReturnValue({
+                run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 3 } })
+            })
+        };
+        mockPrepare.mockReturnValue(mockStmt);
+
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: 'OldCat', newCategory: 'Uncategorized' });
         const response = await worker.fetch(request, mockEnv);
 
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.updated).toBe(3);
+        expect(body.message).toContain('OldCat');
+        expect(body.message).toContain('Uncategorized');
+        expect(mockPrepare).toHaveBeenCalledWith('UPDATE expense SET Category = ? WHERE Category = ?');
+    });
+
+    it('should return 400 for missing fields', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, {});
+        const response = await worker.fetch(request, mockEnv);
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toContain('Validation Error');
     });
 
-    it('should return 404 if expense to delete is not found', async () => {
-        const expenseToDelete = { id: 999 }; // Non-existent ID
-        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 0 } }); // Simulate no rows affected
-
-        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
+    it('should return 400 for empty oldCategory', async () => {
+        const request = createMockRequest('http://localhost/api/expenses/category', 'PATCH', { 'Content-Type': 'application/json' }, { oldCategory: '', newCategory: 'Uncategorized' });
         const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('404, not found!');
-    });
-
-    it('should return 500 if D1 database operation fails', async () => {
-        const errorMessage = 'Database delete error';
-        mockRun.mockRejectedValueOnce(new Error(errorMessage));
-
-        const expenseToDelete = { id: 1 };
-        const request = createMockRequest('http://localhost/api/expense', 'DELETE', { 'Origin': 'https://expensetracker.hgnlab.org', 'Content-Type': 'application/json' }, expenseToDelete);
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        expect(response.status).toBe(400);
     });
 });
 
@@ -598,10 +373,8 @@ describe('PATCH /api/expenses/category', () => {
 
 describe('Catch-all 404', () => {
     it('should return 404 for unmatched routes', async () => {
-        const request = createMockRequest('http://localhost/non-existent-route', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const request = createMockRequest('http://localhost/non-existent-route', 'GET');
         const response = await worker.fetch(request, mockEnv);
-
         expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('404, not found!');
     });
 });

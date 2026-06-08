@@ -194,6 +194,45 @@ paths:
         '500':
           description: Internal server error.
 
+  /api/expenses/category:
+    patch:
+      summary: Reassign expenses from one category to another
+      description: Bulk updates all expenses with the oldCategory to use newCategory instead. Used when renaming or deleting categories.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldCategory:
+                  type: string
+                  description: The current category name to replace.
+                newCategory:
+                  type: string
+                  description: The new category name to assign.
+              required:
+                - oldCategory
+                - newCategory
+      responses:
+        '200':
+          description: Expenses reassigned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                  type: integer
+                  description: Number of expenses updated.
+                  message:
+                    type: string
+                  description: Human-readable result message.
+        '400':
+          description: Bad request, missing required fields.
+        '500':
+          description: Internal server error.
+
 components:
   schemas:
     Expense:

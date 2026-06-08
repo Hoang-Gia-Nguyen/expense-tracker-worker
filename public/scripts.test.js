@@ -259,14 +259,14 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
 
     // expense list grouped by date (desc) with separators
     const rows = getAllRows(document);
-    const sepRows = rows.filter(r => r.classList.contains('date-separator'));
+    const sepRows = rows.filter(r => r.classList.contains('daily-totals-row'));
     expect(sepRows.length).toBe(2);
     expect(textContent(sepRows[0])).toContain('2025-08-09'); // newest date first
     expect(textContent(sepRows[1])).toContain('2025-08-08');
 
     // Buttons present with data-ids
-    const deletes = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm');
-    const modifies = document.querySelectorAll('#expense-list .btn.btn-info.btn-sm');
+    const deletes = document.querySelectorAll('#expense-list .btn-icon-delete');
+    const modifies = document.querySelectorAll('#expense-list .btn-icon-edit');
     expect(deletes.length).toBe(SAMPLE_EXPENSES.length);
     expect(modifies.length).toBe(SAMPLE_EXPENSES.length);
 
@@ -334,12 +334,12 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     });
 
     const filter = document.getElementById('category-filter');
-    const listBefore = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listBefore = document.querySelectorAll('#expense-list .btn-icon-delete').length;
 
     filter.value = 'Food';
     filter.dispatchEvent(new document.defaultView.Event('change', { bubbles: true }));
 
-    const listAfter = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listAfter = document.querySelectorAll('#expense-list .btn-icon-delete').length;
     // Only two Food items remain
     expect(listAfter).toBe(2);
     expect(listAfter).toBeLessThan(listBefore);
@@ -347,7 +347,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     // Switch back to All
     filter.value = 'All';
     filter.dispatchEvent(new document.defaultView.Event('change', { bubbles: true }));
-    const listAll = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listAll = document.querySelectorAll('#expense-list .btn-icon-delete').length;
     expect(listAll).toBe(SAMPLE_EXPENSES.length);
 
     cleanup();
@@ -501,7 +501,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Modify" button
-    const firstModify = document.querySelector('#expense-list .btn.btn-info.btn-sm');
+    const firstModify = document.querySelector('#expense-list .btn-icon-edit');
     firstModify.dispatchEvent(new document.defaultView.MouseEvent('click', { bubbles: true }));
 
     // Modal shown
@@ -567,7 +567,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Delete" button
-    const firstDelete = document.querySelector('#expense-list .btn.btn-danger.btn-sm');
+    const firstDelete = document.querySelector('#expense-list .btn-icon-delete');
     const firstId = firstDelete.getAttribute('data-id');
     const target = SAMPLE_EXPENSES.find(e => String(e.rowid) === firstId);
 

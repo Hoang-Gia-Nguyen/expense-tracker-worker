@@ -1,13 +1,288 @@
 /* Add your custom styles here */
 
-/* Table Styles for better clarity and modern look */
-.table {
-    border-collapse: collapse; /* Use collapse for cleaner lines */
-    width: 100%;
-    border: 1px solid #dee2e6; /* Add a border to the whole table */
+/* ===== Expense List — Modern Card-Based Design ===== */
+
+/* Expense table wrapper */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-/* Style for table header */
+/* Table base — clean, borderless */
+#expense-list-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+    margin-top: 0;
+}
+
+/* Hide the default table header (we use date group headers) */
+#expense-list-table thead {
+    display: none;
+}
+
+/* ===== Daily Totals Row (compact header for each day) ===== */
+.daily-totals-row {
+    background: transparent !important;
+    cursor: default !important;
+}
+
+.daily-totals-row td {
+    border: none !important;
+    padding: 12px 0 6px 0 !important;
+}
+
+.daily-totals-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(26, 115, 232, 0.25);
+}
+
+.daily-totals-card .date-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.daily-totals-card .day-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+}
+
+.daily-totals-card .date-text {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.daily-totals-card .daily-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.daily-totals-card .daily-count {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+.daily-totals-card .daily-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* ===== Individual Expense Rows ===== */
+.expense-row {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.expense-row td {
+    padding: 0 !important;
+    border: none !important;
+}
+
+.expense-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 4px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    gap: 12px;
+}
+
+.expense-row:hover .expense-card {
+    border-color: #1a73e8;
+    box-shadow: 0 2px 12px rgba(26, 115, 232, 0.12);
+    transform: translateY(-1px);
+}
+
+/* Category color dot */
+.expense-category-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Description */
+.expense-description {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #202124;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Category badge */
+.expense-category-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Amount */
+.expense-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #202124;
+    text-align: right;
+    min-width: 110px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Action buttons */
+.expense-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.9rem;
+}
+
+.btn-icon:hover {
+    background: #f1f3f4;
+}
+
+.btn-icon-edit:hover {
+    background: #e8f0fe;
+    color: #1a73e8;
+    border-color: #1a73e8;
+}
+
+.btn-icon-delete:hover {
+    background: #fce8e6;
+    color: #d93025;
+    border-color: #d93025;
+}
+
+/* ===== Empty state ===== */
+.expense-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9aa0a6;
+    font-size: 0.95rem;
+}
+
+.expense-empty i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 12px;
+    color: #dadce0;
+}
+
+/* ===== Responsive: stack on small screens ===== */
+@media (max-width: 600px) {
+    .expense-card {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+    .expense-description {
+        min-width: 100%;
+        order: -1;
+        margin-bottom: 4px;
+    }
+    .expense-category-badge {
+        font-size: 0.65rem;
+    }
+    .expense-amount {
+        font-size: 0.9rem;
+        min-width: auto;
+    }
+    .daily-totals-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px 16px;
+    }
+    .daily-totals-card .daily-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* ===== Filters Bar ===== */
+.filters-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.filters-bar .form-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: #5f6368;
+}
+
+.filters-bar .form-select,
+.filters-bar .form-control {
+    font-size: 0.85rem;
+}
+
+.filters-bar .search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 160px;
+    max-width: 280px;
+}
+
+.filters-bar .search-input-wrapper .bi-search {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9aa0a6;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.filters-bar .search-input-wrapper input {
+    padding-left: 30px;
+}
+
+/* ===== Old table styles (fallback) ===== */
+.table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
 .table thead th {
     background-color: #f8f9fa;
     border-bottom: 2px solid #dee2e6;
@@ -16,44 +291,29 @@
     padding: 0.9rem;
 }
 
-/* Style for all table body rows - now all white */
 .table tbody tr {
     background-color: #ffffff;
     transition: background-color 0.2s ease-in-out;
 }
 
-/* Remove the striping */
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: #ffffff;
 }
 
-/* A slightly more noticeable hover effect on the white rows */
 .table-hover tbody tr:hover {
-    background-color: #f1f3f5; /* A very light grey for hover */
+    background-color: #f1f3f5;
     cursor: pointer;
 }
 
-/* Cell padding and borders */
 .table td, .table th {
     padding: 0.9rem;
     vertical-align: middle;
-    border: 1px solid #dee2e6; /* Use a consistent border for all cells */
-}
-
-/* Highlighted Date separator style */
-.date-separator td {
-    background-color: #0d6efd; /* Bootstrap primary blue for highlighting */
-    color: #ffffff; /* White text for contrast */
-    font-weight: bold;
-    text-align: center; /* Center align the date */
-    padding: 0.75rem; /* Adjust padding */
-    border: 1px solid #0d6efd;
 }
 
 /* Actions column style */
 .actions-cell {
-    width: 1%; /* Allow the cell to shrink to content */
-    white-space: nowrap; /* Prevent buttons from wrapping */
+    width: 1%;
+    white-space: nowrap;
     text-align: center;
 }
 
@@ -61,7 +321,7 @@
 .btn-info {
     background-color: #ffc107;
     border-color: #ffc107;
-    color: #000; /* Black text for better readability on yellow */
+    color: #000;
 }
 
 .btn-info:hover {
@@ -75,7 +335,6 @@
     width: 100%;
     height: 300px;
 }
-
 
 /* Settings Modal Styles */
 #settings-modal .modal-dialog {

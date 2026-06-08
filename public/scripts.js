@@ -39,7 +39,7 @@ export function createExpenseTrackerApp(domElements) {
 
     const {
         expenseForm, expenseList, dateInput, amountInput, descriptionInput, categoryInput,
-        addExpenseBtn, monthPicker, categoryFilter, totalSummaryDiv, dailySpendingSummaryDiv,
+        addExpenseBtn, monthPicker, categoryFilter, searchInput, totalSummaryDiv, dailySpendingSummaryDiv,
         startOfMonthSummaryDiv, budgetedSummaryDiv, otherSpendingSummaryDiv, chartCanvas, burndownCanvas,
         deleteConfirmModal, deleteModalBody, confirmDeleteBtn, deleteAmountInput, deleteWarning,
         modifyExpenseModal, modifyExpenseForm, modifyExpenseIdInput, modifyDateInput,
@@ -349,6 +349,7 @@ export function createExpenseTrackerApp(domElements) {
         expenseList.innerHTML = '';
 
         // Sort expenses by date in descending order
+        data.sort((a, b) => new Date(b.date) - new Date(b.date));
         data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         // Group expenses by date
@@ -361,40 +362,106 @@ export function createExpenseTrackerApp(domElements) {
             return acc;
         }, {});
 
-        // Render expenses with date separators
-        for (const date in groupedExpenses) {
-            // Add a date separator row
-            const separatorRow = document.createElement('tr');
-            separatorRow.classList.add('date-separator');
-            separatorRow.innerHTML = `<td colspan="5">${date}</td>`;
-            expenseList.appendChild(separatorRow);
+        // Grab category colors from settings for badges
+        const catColors = typeof getCategoryColors === 'function' ? getCategoryColors() : {};
 
-            // Add expense rows for that date
-            groupedExpenses[date].forEach((expense) => {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Render expenses with modern date group headers
+        for (const date in groupedExpenses) {
+            const expenses = groupedExpenses[date];
+            const dayTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+            const dayDate = new Date(date + 'T00:00:00');
+            const dayName = dayNames[dayDate.getDay()];
+
+            // Format: "Thứ 2, 08/06/2025" for Vietnamese locale
+            const formattedDate = dayDate.toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
+
+            // --- Daily totals header row ---
+            const headerRow = document.createElement('tr');
+            headerRow.className = 'daily-totals-row';
+            headerRow.innerHTML = `
+                <td colspan="4">
+                    <div class="daily-totals-card">
+                        <div class="date-info">
+                            <span class="day-name">${dayName}</span>
+                            <span class="date-text">${date}</span>
+                        </div>
+                        <div class="daily-stats">
+                            <span class="daily-count">${expenses.length} transaction${expenses.length !== 1 ? 's' : ''}</span>
+                            <span class="daily-amount">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dayTotal)}</span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            expenseList.appendChild(headerRow);
+
+            // --- Individual expense rows ---
+            expenses.forEach((expense) => {
+                const color = catColors[expense.category] || '#808080';
                 const row = document.createElement('tr');
+                row.className = 'expense-row';
                 row.innerHTML = `
-                    <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
-                    <td>${expense.description}</td>
-                    <td>${expense.category}</td>
-                    <td class="actions-cell">
-                        <button class="btn btn-info btn-sm" data-id="${expense.rowid}">Modify</button>
-                        <button class="btn btn-danger btn-sm" data-id="${expense.rowid}">Delete</button>
+                    <td colspan="4">
+                        <div class="expense-card">
+                            <span class="expense-category-dot" style="background: ${color};"></span>
+                            <span class="expense-description" title="${expense.description}">${expense.description}</span>
+                            <span class="expense-category-badge" style="background: ${color}20; color: ${color};">${expense.category}</span>
+                            <span class="expense-amount">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</span>
+                            <span class="expense-actions">
+                                <button class="btn-icon btn-icon-edit" data-id="${expense.rowid}" title="Modify">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn-icon btn-icon-delete" data-id="${expense.rowid}" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </span>
+                        </div>
                     </td>
                 `;
                 expenseList.appendChild(row);
             });
+        }
+
+        // Show empty state if no data
+        if (data.length === 0) {
+            expenseList.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        <div class="expense-empty">
+                            <i class="bi bi-inbox"></i>
+                            No expenses found for this month
+                        </div>
+                    </td>
+                </tr>`;
         }
     }
 
     // --- Local filtering function ---
     function applyFilter() {
         const selectedCategory = categoryFilter.value;
-        if (selectedCategory === 'All') {
-            renderExpenses(allExpensesForMonth);
-        } else {
-            const filteredExpenses = allExpensesForMonth.filter(expense => expense.category === selectedCategory);
-            renderExpenses(filteredExpenses);
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+        let filtered = allExpensesForMonth;
+
+        // Filter by category
+        if (selectedCategory && selectedCategory !== 'All') {
+            filtered = filtered.filter(expense => expense.category === selectedCategory);
         }
+
+        // Filter by description search
+        if (searchTerm) {
+            filtered = filtered.filter(expense =>
+                expense.description.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        renderExpenses(filtered);
     }
 
     async function fetchExpensesForMonth() {
@@ -465,8 +532,8 @@ export function createExpenseTrackerApp(domElements) {
         }
     }
 
-    function modifyExpense(e) {
-        const expenseId = e.target.getAttribute('data-id');
+    function modifyExpense(btn) {
+        const expenseId = btn.getAttribute('data-id');
         const expenseToModify = allExpensesForMonth.find(exp => exp.rowid == expenseId);
 
         if (expenseToModify) {
@@ -524,10 +591,8 @@ export function createExpenseTrackerApp(domElements) {
         }
     }
 
-    async function deleteExpense(e) {
-        if (!e.target.classList.contains('btn-danger')) return;
-
-        const expenseId = e.target.getAttribute('data-id');
+    async function deleteExpense(btn) {
+        const expenseId = btn.getAttribute('data-id');
         const expenseToDelete = allExpensesForMonth.find(exp => exp.rowid == expenseId);
 
         if (expenseToDelete) {
@@ -613,12 +678,15 @@ export function createExpenseTrackerApp(domElements) {
 
     monthPicker.addEventListener('change', fetchExpensesForMonth);
     categoryFilter.addEventListener('change', applyFilter); // Just apply the filter locally
+    if (searchInput) searchInput.addEventListener('input', applyFilter);
     expenseForm.addEventListener('submit', addExpense);
     expenseList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-danger')) {
-            deleteExpense(e);
-        } else if (e.target.classList.contains('btn-info')) {
-            modifyExpense(e);
+        const deleteBtn = e.target.closest('.btn-icon-delete');
+        const editBtn = e.target.closest('.btn-icon-edit');
+        if (deleteBtn) {
+            deleteExpense(deleteBtn);
+        } else if (editBtn) {
+            modifyExpense(editBtn);
         }
     });
     confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
@@ -667,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addExpenseBtn: document.getElementById('add-expense-btn'),
         monthPicker: document.getElementById('month-picker'),
         categoryFilter: document.getElementById('category-filter'),
+        searchInput: document.getElementById('search-input'),
         totalSummaryDiv: document.getElementById('total-summary'),
         dailySpendingSummaryDiv: document.getElementById('daily-spending-summary'),
         startOfMonthSummaryDiv: document.getElementById('start-of-month-summary'),

@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { createSummaryApp } from './summary.js';
+import { createSummaryApp } from './summary/summary.js';
 
 function buildHTML() {
   return `
-  <input type="month" id="month-picker" />
-  <div id="loading-spinner" class="d-none"></div>
-  <div id="error-message" class="d-none"></div>
-  <div id="stats-cards"></div>
-  <canvas id="doughnut-chart"></canvas>
+  <div id="category-charts"></div>
+  <div id="metric-total-current"></div>
+  <div id="metric-avg"></div>
+  <div id="metric-change"></div>
+  <div id="metric-top-category"></div>
+  <div id="metric-top-value"></div>
+  <canvas id="trends-chart"></canvas>
+  <canvas id="breakdown-chart"></canvas>
   <canvas id="total-chart"></canvas>
   <div id="category-charts"></div>
   <canvas id="comparison-chart"></canvas>
@@ -128,7 +131,7 @@ describe('summary.js', () => {
     vi.setSystemTime(new Date('2024-08-15T00:00:00Z'));
   });
 
-  it('renders all summary sections with correct data', async () => {
+  it('fetches last 7 months and renders summary charts', async () => {
     const dom = new JSDOM(buildHTML(), { url: 'http://localhost/' });
     global.window = dom.window;
     global.document = dom.window.document;
@@ -160,85 +163,19 @@ describe('summary.js', () => {
     const app = createSummaryApp(domElements);
     await app.init();
 
-    // Verify the month picker default value
-    expect(domElements.monthPicker.value).toBe('2024-07');
-
-    // Verify stats cards are populated (using Vietnamese locale format)
-    const cardText = domElements.statsCards.textContent;
-    expect(cardText).toContain('Home');
-    expect(cardText).toContain('30');
-    expect(cardText).toContain('15.000.000');
-    expect(cardText).toContain('500.000');
-
-    // Verify API calls
-    const allUrls = fetchMock.mock.calls.map(call => call[0]);
-
-    // Stats endpoint called
-    expect(allUrls.some(u => u.includes('/api/summary/stats'))).toBe(true);
-
-    // Categories endpoint called
-    expect(allUrls.some(u => u.includes('/api/summary/categories'))).toBe(true);
-
-    // Top transactions endpoint called
-    expect(allUrls.some(u => u.includes('/api/summary/top-transactions'))).toBe(true);
-
-    // Comparison endpoint called
-    expect(allUrls.some(u => u.includes('/api/summary/comparison'))).toBe(true);
-
-    // YTD endpoint called
-    expect(allUrls.some(u => u.includes('/api/summary/ytd'))).toBe(true);
-
-    // Category table should be visible
-    expect(domElements.categoryTableSection.classList.contains('d-none')).toBe(false);
-
-    // Top transactions should be visible
-    expect(domElements.topTransactionsSection.classList.contains('d-none')).toBe(false);
-
-    // Chart instances created (doughnut + total line + 4 category lines + comparison bar + 2 ytd = 9+)
-    expect(chartFactory.mock.calls.length).toBeGreaterThanOrEqual(8);
-  });
-
-  it('re-fetches when month picker changes', async () => {
-    const dom = new JSDOM(buildHTML(), { url: 'http://localhost/' });
-    global.window = dom.window;
-    global.document = dom.window.document;
-
-    const fetchMock = createMockFetch();
-    global.fetch = fetchMock;
-
-    const chartMock = { destroy: vi.fn() };
-    global.Chart = vi.fn(() => chartMock);
-
-    const domElements = {
-      monthPicker: document.getElementById('month-picker'),
-      loadingSpinner: document.getElementById('loading-spinner'),
-      errorMessage: document.getElementById('error-message'),
-      statsCards: document.getElementById('stats-cards'),
-      doughnutCanvas: document.getElementById('doughnut-chart'),
-      totalCanvas: document.getElementById('total-chart'),
-      categoryChartsDiv: document.getElementById('category-charts'),
-      comparisonCanvas: document.getElementById('comparison-chart'),
-      categoryTableSection: document.getElementById('category-table-section'),
-      categoryTableBody: document.getElementById('category-table-body'),
-      topTransactionsSection: document.getElementById('top-transactions-section'),
-      topTransactionsBody: document.getElementById('top-transactions-body'),
-      ytdSection: document.getElementById('ytd-section'),
-      ytdMonthlyCanvas: document.getElementById('ytd-monthly-chart'),
-      ytdCategoryCanvas: document.getElementById('ytd-category-chart'),
-    };
-
-    const app = createSummaryApp(domElements);
-    await app.init();
-
-    const initialCallCount = fetchMock.mock.calls.length;
-
-    // Simulate changing the month picker to a different month
-    domElements.monthPicker.value = '2024-05';
-    domElements.monthPicker.dispatchEvent(new dom.window.Event('change'));
-
-    // Wait for the re-fetch to complete
-    await vi.waitFor(() => {
-      expect(fetchMock.mock.calls.length).toBeGreaterThan(initialCallCount);
-    });
+    expect(fetchMock).toHaveBeenCalledTimes(7);
+    const urls = fetchMock.mock.calls.map(call => call[0]);
+    expect(urls).toEqual([
+      '/api/summary?year=2024&month=02',
+      '/api/summary?year=2024&month=03',
+      '/api/summary?year=2024&month=04',
+      '/api/summary?year=2024&month=05',
+      '/api/summary?year=2024&month=06',
+      '/api/summary?year=2024&month=07',
+      '/api/summary?year=2024&month=08'
+    ]);
+    expect(chartFactory).toHaveBeenCalledTimes(2);
+    // Code no longer creates individual category charts
+    expect(domElements.categoryChartsDiv.querySelectorAll('canvas').length).toBe(0);
   });
 });

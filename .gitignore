@@ -6,9 +6,16 @@ node_modules/
 schema-and-data.sql
 
 # macOS specific files
-.DS_Store
-# Local analysis docs (not part of project source)
-ANALYSIS.md
-.test-bundle/
 
-SUMMARY_SUGGESTIONS.md
+# Database and seed files
+*.sql
+
+# Environment files
+.env
+
+# VS Code settings
+.vscode/
+.DS_Store
+.claude
+coverage/
+.test-bundle/

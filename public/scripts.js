@@ -1,7 +1,7 @@
 import {
   getCategories, getCategoryOrder, getCategoryColors,
   getBudgets, getTotalBudget, getStartOfMonthCategories,
-  populateCategorySelect, initSettings, openSettingsModal,
+  populateCategorySelect, initSettings, openSettingsModal, toggleTheme, toggleTheme,
 } from './settings.js';
 
 const apiUrl = '/api/expense';
@@ -651,6 +651,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize settings system
     initSettings();
     document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
+    // Set initial theme icon
+    const initialSettings = Object.assign({ theme: 'light' }, JSON.parse(localStorage.getItem('expense_tracker_settings') || '{}'));
+    const initIcon = document.querySelector('#theme-toggle-btn i');
+    if (initIcon) {
+      initIcon.className = initialSettings.theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+    }
 
     // Populate category dropdowns from settings
     populateCategorySelect(document.getElementById('category'), { placeholder: 'Select a category' });

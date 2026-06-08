@@ -52,9 +52,12 @@ describe('index.html structure', () => {
     expect(document.getElementById('burndown-chart')).not.toBeNull();
   });
 
-  it('renders navigation links and settings button', () => {
+  it('renders navigation links, theme toggle, and settings button', () => {
     const navLinks = Array.from(document.querySelectorAll('nav .nav-link')).map(a => a.getAttribute('href'));
     expect(navLinks).toEqual(['/expense', '/summary', '/insights']);
+    const themeToggle = document.getElementById('theme-toggle-btn');
+    expect(themeToggle).toBeTruthy();
+    expect(themeToggle.querySelector('i').classList.contains('bi-sun-fill')).toBe(true);
     const settingsBtn = document.getElementById('settings-btn');
     expect(settingsBtn).toBeTruthy();
   });

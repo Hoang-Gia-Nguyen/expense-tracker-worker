@@ -4,7 +4,18 @@
   (function() {
     try {
       var s = JSON.parse(localStorage.getItem('expense_tracker_settings'));
-      if (s && s.theme) document.documentElement.setAttribute('data-bs-theme', s.theme);
+      if (s && s.theme) {
+        document.documentElement.setAttribute('data-bs-theme', s.theme);
+        // Set initial theme toggle icon
+        var toggleBtn = document.getElementById('theme-toggle-btn');
+        if (toggleBtn) {
+          var icon = toggleBtn.querySelector('i');
+          if (icon) {
+            icon.className = s.theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+          }
+          toggleBtn.title = s.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        }
+      }
     } catch(e) {}
   })();
 </script>
@@ -15,6 +26,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="/theme.css">
     <link rel="icon" type="image/png" href="/favico.png">
 </head>
@@ -28,6 +40,9 @@
                 <a class="nav-link active" aria-current="page" href="/insights">Insights</a>
             </div>
             <div class="navbar-nav ms-auto">
+                <button class="btn btn-outline-secondary btn-sm" id="theme-toggle-btn" title="Switch to dark theme">
+                    <i class="bi bi-sun-fill"></i>
+                </button>
                 <button class="btn btn-outline-secondary btn-sm" id="settings-btn" title="Settings">
                     <i class="bi bi-gear-fill"></i>
                 </button>
@@ -105,10 +120,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="/settings.js"></script>
     <script type="module">
-        import { initSettings, openSettingsModal } from '/settings.js';
+        import { initSettings, openSettingsModal, toggleTheme } from '/settings.js';
         import { createInsightsApp } from '/insights.js';
         initSettings();
         document.getElementById('settings-btn')?.addEventListener('click', openSettingsModal);
+        document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
         const app = createInsightsApp({
             dailyChart: document.getElementById('daily-spending-chart'),
             dailySpikesContent: document.getElementById('daily-spikes-content'),

@@ -7,7 +7,7 @@ body {
 .table {
     border-collapse: collapse;
     width: 100%;
-    border: 1px solid var(--bs-border-color);
+    border: none;
 }
 
 /* Table header */
@@ -16,28 +16,24 @@ body {
     border-bottom: 2px solid var(--bs-border-color);
     text-align: center;
     font-weight: 600;
-    padding: 0.9rem;
+    padding: 0.9rem 0.75rem;
+    border-left: none;
+    border-right: none;
 }
 
 /* Table body rows */
 .table tbody tr {
-    background-color: var(--bs-surface-bg);
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.15s ease-in-out;
 }
 
 /* Remove striping */
 .table-striped tbody tr:nth-of-type(odd) {
-    background-color: var(--bs-surface-bg);
+    background-color: transparent;
 }
 
-/* Hover transition on table rows */
-.table-hover tbody tr {
-    transition: background-color 0.15s ease-in-out;
-}
-
+/* Subtle hover on rows */
 .table-hover tbody tr:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
-    cursor: pointer;
+    background-color: rgba(var(--bs-primary-rgb), 0.04);
 }
 
 /* Table wrapper for horizontal scroll on mobile */
@@ -46,21 +42,48 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Table cells */
+/* Table cells — only subtle horizontal dividers, no vertical borders */
 .table td, .table th {
-    padding: 0.9rem;
+    padding: 1rem 0.75rem;
     vertical-align: middle;
-    border: 1px solid var(--bs-border-color);
+    border: none;
+    border-bottom: 1px solid var(--bs-border-color);
 }
 
-/* Date separator */
+/* Date separator — sticky, soft background, semibold date */
+.date-separator {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
 .date-separator td {
-    background-color: var(--bs-secondary);
-    color: #ffffff;
-    font-weight: bold;
-    text-align: center;
-    padding: 0.75rem;
-    border: 1px solid var(--bs-primary);
+    background-color: var(--bs-tertiary-bg);
+    font-weight: 600;
+    border-top: 2px solid var(--bs-border-color);
+    border-bottom: 2px solid var(--bs-border-color);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+
+/* Expense row hover */
+.expense-row {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.expense-row:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.04);
+}
+
+/* Category color dot */
+.category-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 /* Actions column */
@@ -70,16 +93,9 @@ body {
     text-align: center;
 }
 
-/* Modify button style */
-.btn-info {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #000;
-}
-
-.btn-info:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
+/* Amount cell — tabular-nums for perfect digit alignment */
+.amount-cell {
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Card Styles ── */

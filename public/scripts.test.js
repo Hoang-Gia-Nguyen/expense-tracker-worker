@@ -38,9 +38,11 @@ function buildHTML() {
     <div id="budgeted-summary"></div>
     <div id="other-spending-summary"></div>
 
-    <table>
+    <div class="table-responsive">
+    <table class="table table-striped table-hover">
       <tbody id="expense-list"></tbody>
     </table>
+    </div>
 
     <canvas id="expense-chart"></canvas>
     <canvas id="burndown-chart"></canvas>
@@ -265,8 +267,8 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(textContent(sepRows[1])).toContain('2025-08-08');
 
     // Buttons present with data-ids
-    const deletes = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm');
-    const modifies = document.querySelectorAll('#expense-list .btn.btn-info.btn-sm');
+    const deletes = document.querySelectorAll('#expense-list .btn-outline-danger');
+    const modifies = document.querySelectorAll('#expense-list .btn-outline-secondary');
     expect(deletes.length).toBe(SAMPLE_EXPENSES.length);
     expect(modifies.length).toBe(SAMPLE_EXPENSES.length);
 
@@ -334,12 +336,12 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     });
 
     const filter = document.getElementById('category-filter');
-    const listBefore = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listBefore = document.querySelectorAll('#expense-list .btn-outline-danger').length;
 
     filter.value = 'Food';
     filter.dispatchEvent(new document.defaultView.Event('change', { bubbles: true }));
 
-    const listAfter = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listAfter = document.querySelectorAll('#expense-list .btn-outline-danger').length;
     // Only two Food items remain
     expect(listAfter).toBe(2);
     expect(listAfter).toBeLessThan(listBefore);
@@ -347,7 +349,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     // Switch back to All
     filter.value = 'All';
     filter.dispatchEvent(new document.defaultView.Event('change', { bubbles: true }));
-    const listAll = document.querySelectorAll('#expense-list .btn.btn-danger.btn-sm').length;
+    const listAll = document.querySelectorAll('#expense-list .btn-outline-danger').length;
     expect(listAll).toBe(SAMPLE_EXPENSES.length);
 
     cleanup();
@@ -501,7 +503,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Modify" button
-    const firstModify = document.querySelector('#expense-list .btn.btn-info.btn-sm');
+    const firstModify = document.querySelector('#expense-list .btn-outline-secondary');
     firstModify.dispatchEvent(new document.defaultView.MouseEvent('click', { bubbles: true }));
 
     // Modal shown
@@ -567,7 +569,7 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Click first "Delete" button
-    const firstDelete = document.querySelector('#expense-list .btn.btn-danger.btn-sm');
+    const firstDelete = document.querySelector('#expense-list .btn-outline-danger');
     const firstId = firstDelete.getAttribute('data-id');
     const target = SAMPLE_EXPENSES.find(e => String(e.rowid) === firstId);
 
@@ -691,5 +693,124 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
     expect(document.getElementById('other-spending-summary').innerHTML).toBe('');
 
     cleanup();
+
+
   });
+
+  it('renders desktop rows with right-aligned bold amount and tabular-nums styling', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const rows = document.querySelectorAll('#expense-list .expense-row');
+    expect(rows.length).toBe(SAMPLE_EXPENSES.length);
+
+    const firstAmount = rows[0].querySelector('.amount-cell');
+    expect(firstAmount).toBeTruthy();
+    expect(firstAmount.classList.contains('text-end')).toBe(true);
+    expect(firstAmount.classList.contains('fw-bold')).toBe(true);
+    expect(firstAmount.style.fontSize).toBe('1.1em');
+    expect(firstAmount.style.fontVariantNumeric).toBe('tabular-nums');
+
+    cleanup();
+  });
+
+  it('renders category with 12px colored dot using getCategoryColors()', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const rows = document.querySelectorAll('#expense-list .expense-row');
+    const categoryColors = (await import('./settings.js')).getCategoryColors();
+
+    rows.forEach(row => {
+      const dot = row.querySelector('.category-dot');
+      expect(dot).toBeTruthy('each row should have a .category-dot span');
+      expect(dot.tagName).toBe('SPAN');
+      // Verify the dot has the category-dot class (CSS handles dimensions)
+      expect(dot.classList.contains('category-dot')).toBe(true);
+      // Verify background-color is set via inline style
+      expect(dot.style.backgroundColor).toBeTruthy();
+
+      const cell = row.querySelector('td:nth-child(3)');
+      const dotColor = dot.style.backgroundColor;
+      const catName = cell.textContent.trim();
+      expect(dotColor).toBeTruthy('dot should have a background-color');
+      if (categoryColors[catName]) {
+        // jsdom converts hex to rgb format
+        const hex = categoryColors[catName];
+        const r = parseInt(hex.slice(1,3), 16);
+        const g = parseInt(hex.slice(3,5), 16);
+        const b = parseInt(hex.slice(5,7), 16);
+        expect(dotColor).toBe(`rgb(${r}, ${g}, ${b})`);
+      }
+    });
+
+    cleanup();
+  });
+
+  it('renders icon-only edit and delete buttons with title and aria-label', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const rows = document.querySelectorAll('#expense-list .expense-row');
+
+    rows.forEach(row => {
+      const editBtn = row.querySelector('.btn-outline-secondary');
+      expect(editBtn).toBeTruthy();
+      expect(editBtn.title).toBe('Edit expense');
+      expect(editBtn.getAttribute('aria-label')).toBe('Edit expense');
+      expect(editBtn.querySelector('.bi-pencil')).toBeTruthy();
+
+      const deleteBtn = row.querySelector('.btn-outline-danger');
+      expect(deleteBtn).toBeTruthy();
+      expect(deleteBtn.title).toBe('Delete expense');
+      expect(deleteBtn.getAttribute('aria-label')).toBe('Delete expense');
+      expect(deleteBtn.querySelector('.bi-trash3')).toBeTruthy();
+    });
+
+    cleanup();
+  });
+
+  it('renders date separator rows as sticky with semibold date text', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const sepRows = document.querySelectorAll('#expense-list .date-separator');
+    expect(sepRows.length).toBe(2);
+
+    sepRows.forEach(row => {
+      expect(row.classList.contains('date-separator')).toBe(true);
+      expect(row.style.position).toBe('sticky');
+      expect(row.style.top).toBe('0px');
+    });
+
+    expect(sepRows[0].textContent).toContain('2025-08-09');
+    expect(sepRows[1].textContent).toContain('2025-08-08');
+
+    cleanup();
+  });
+
+  it('has no vertical borders or striping on the table', async () => {
+    const { document, cleanup } = await bootApp({
+      initialGet: { ok: true, json: async () => SAMPLE_EXPENSES },
+    });
+
+    const table = document.querySelector('.table');
+    expect(table).toBeTruthy();
+
+    const headerCells = table.querySelectorAll('thead th');
+    headerCells.forEach(th => {
+      expect(th.style.borderLeft).toBe('' || 'none');
+      expect(th.style.borderRight).toBe('' || 'none');
+    });
+
+    const wrapper = document.querySelector('.table-responsive');
+    expect(wrapper).toBeTruthy();
+
+    cleanup();
+  });
+
 });

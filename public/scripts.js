@@ -351,10 +351,8 @@ export function createExpenseTrackerApp(domElements) {
     function renderExpenses(data) {
         expenseList.innerHTML = '';
 
-        // Sort expenses by date in descending order
         data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Group expenses by date
         const groupedExpenses = data.reduce((acc, expense) => {
             const date = expense.date;
             if (!acc[date]) {
@@ -364,24 +362,27 @@ export function createExpenseTrackerApp(domElements) {
             return acc;
         }, {});
 
-        // Render expenses with date separators
+        const categoryColors = getCategoryColors();
+
         for (const date in groupedExpenses) {
-            // Add a date separator row
             const separatorRow = document.createElement('tr');
-            separatorRow.classList.add('date-separator');
-            separatorRow.innerHTML = `<td colspan="5">${date}</td>`;
+            separatorRow.className = 'date-separator';
+            separatorRow.style.position = 'sticky';
+            separatorRow.style.top = '0';
+            separatorRow.innerHTML = `<td colspan="4">${date}</td>`;
             expenseList.appendChild(separatorRow);
 
-            // Add expense rows for that date
             groupedExpenses[date].forEach((expense) => {
+                const color = categoryColors[expense.category] || '#808080';
                 const row = document.createElement('tr');
+                row.className = 'expense-row';
                 row.innerHTML = `
-                    <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
+                    <td class="text-end fw-bold amount-cell" style="font-size:1.1em;font-variant-numeric:tabular-nums">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}</td>
                     <td>${expense.description}</td>
-                    <td>${expense.category}</td>
+                    <td><span class="category-dot" style="background-color:${color}"></span>${expense.category}</td>
                     <td class="actions-cell">
-                        <button class="btn btn-info btn-sm" data-id="${expense.rowid}">Modify</button>
-                        <button class="btn btn-danger btn-sm" data-id="${expense.rowid}">Delete</button>
+                        <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm" data-id="${expense.rowid}" title="Delete expense" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
                     </td>
                 `;
                 expenseList.appendChild(row);
@@ -410,7 +411,7 @@ export function createExpenseTrackerApp(domElements) {
                 applyFilter(); // Apply the current filter to the transaction list
             } else {
                 console.error('Failed to fetch expenses:', await response.text());
-                expenseList.innerHTML = '<tr><td colspan="5" class="text-center">Error loading data.</td></tr>';
+                expenseList.innerHTML = '<tr><td colspan="4" class="text-center">Error loading data.</td></tr>';
                 totalSummaryDiv.innerHTML = '';
                 dailySpendingSummaryDiv.innerHTML = '';
                 startOfMonthSummaryDiv.innerHTML = '';
@@ -419,7 +420,7 @@ export function createExpenseTrackerApp(domElements) {
             }
         } catch (error) {
             console.error('Error fetching expenses:', error);
-            expenseList.innerHTML = '<tr><td colspan="5" class="text-center">Could not connect to the server.</td></tr>';
+            expenseList.innerHTML = '<tr><td colspan="4" class="text-center">Could not connect to the server.</td></tr>';
             totalSummaryDiv.innerHTML = '';
             dailySpendingSummaryDiv.innerHTML = '';
             startOfMonthSummaryDiv.innerHTML = '';
@@ -528,7 +529,7 @@ export function createExpenseTrackerApp(domElements) {
     }
 
     async function deleteExpense(e) {
-        if (!e.target.classList.contains('btn-danger')) return;
+        if (!e.target.classList.contains('btn-danger') && !e.target.classList.contains('btn-outline-danger')) return;
 
         const expenseId = e.target.getAttribute('data-id');
         const expenseToDelete = allExpensesForMonth.find(exp => exp.rowid == expenseId);
@@ -618,10 +619,12 @@ export function createExpenseTrackerApp(domElements) {
     categoryFilter.addEventListener('change', applyFilter); // Just apply the filter locally
     expenseForm.addEventListener('submit', addExpense);
     expenseList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-danger')) {
-            deleteExpense(e);
-        } else if (e.target.classList.contains('btn-info')) {
-            modifyExpense(e);
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.classList.contains('btn-outline-danger') || btn.classList.contains('btn-danger')) {
+            deleteExpense({ target: btn });
+        } else if (btn.classList.contains('btn-outline-secondary') || btn.classList.contains('btn-info')) {
+            modifyExpense({ target: btn });
         }
     });
     confirmDeleteBtn.addEventListener('click', handleConfirmDelete);

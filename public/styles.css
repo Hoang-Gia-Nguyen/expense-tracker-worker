@@ -55,7 +55,7 @@ body {
 
 /* Date separator */
 .date-separator td {
-    background-color: var(--bs-primary);
+    background-color: var(--bs-emphasis-color);
     color: #ffffff;
     font-weight: bold;
     text-align: center;
@@ -97,8 +97,8 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
+    background-color: var(--bs-emphasis-color);
+    border-color: var(--bs-emphasis-color);
 }
 
 .btn-success {
@@ -150,7 +150,7 @@ body {
 
 #settings-modal .nav-tabs .nav-link.active {
     font-weight: 600;
-    color: var(--bs-primary);
+    color: var(--bs-emphasis-color);
 }
 
 /* ── Focus Visible Rings ── */

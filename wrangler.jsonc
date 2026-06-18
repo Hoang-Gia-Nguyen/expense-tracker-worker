@@ -25,6 +25,11 @@
           "binding": "ANALYTICS_TEST",
           "dataset": "ANALYTICS_TEST"
         }
+      ],
+      "ai": [
+        {
+          "binding": "AI"
+        }
       ]
     },
     "development": {
@@ -33,6 +38,11 @@
           "binding": "D1_DATABASE",
           "database_name": "mony-development-db",
           "database_id": "ea700681-91ef-4825-bbe4-7ee90f9519be"
+        }
+      ],
+      "ai": [
+        {
+          "binding": "AI"
         }
       ]
     }

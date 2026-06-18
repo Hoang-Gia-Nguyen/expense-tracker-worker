@@ -63,8 +63,8 @@ Rules:
         );
 
         if (!isValidCategory) {
-            // Fallback to the first available category if AI returns something unexpected
-            suggestedCategory = categories[0];
+            // Return empty when AI can't determine a valid category
+            suggestedCategory = '';
         }
 
         return new Response(JSON.stringify({ suggestedCategory }), {

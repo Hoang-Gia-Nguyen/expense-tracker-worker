@@ -677,8 +677,8 @@ describe('POST /api/expense/suggest-category', () => {
 
         expect(response.status).toBe(200);
         const body = await response.json();
-        // Should fall back to the first category in the list
-        expect(body.suggestedCategory).toBe('Food');
+        // Should return empty string when AI returns invalid category
+        expect(body.suggestedCategory).toBe('');
     });
 });
 

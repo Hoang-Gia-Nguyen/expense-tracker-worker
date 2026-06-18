@@ -97,8 +97,10 @@ export function createExpenseTrackerApp(domElements) {
     // Debounce timer for category suggestion
     let _suggestCategoryTimer = null;
     let _skipModifySuggest = false;
+    let _manualCategorySelected = false;
 
     async function _autoSuggestCategory(amount, description, categorySelect, badgeEl) {
+        if (_manualCategorySelected) return;
         // Clear previous timer
         if (_suggestCategoryTimer) {
             clearTimeout(_suggestCategoryTimer);
@@ -531,6 +533,7 @@ export function createExpenseTrackerApp(domElements) {
                 fetchExpensesForMonth(); // Refetch all data for the month
                 expenseForm.reset();
                 dateInput.value = todayString;
+                _manualCategorySelected = false;
             } else {
                 console.error('Failed to send expense:', await response.text());
                 alert(`Failed to add expense. Server responded: ${response.statusText}. Please try again.`);
@@ -702,6 +705,7 @@ export function createExpenseTrackerApp(domElements) {
     amountInput.addEventListener('input', _onAddFormSuggest);
     descriptionInput.addEventListener('input', _onAddFormSuggest);
     categoryInput.addEventListener('change', function _onCategoryManualChange() {
+        _manualCategorySelected = true;
         if (aiBadge) aiBadge.style.display = 'none';
     });
 

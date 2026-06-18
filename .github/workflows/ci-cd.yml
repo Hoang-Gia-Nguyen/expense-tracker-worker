@@ -1,8 +1,8 @@
-name: CI/CD — codex/main
+name: CI/CD
 
 on:
   push:
-    branches: [codex/main]
+    branches: [codex/main, main]
   pull_request:
     branches: [codex/main]
 
@@ -49,6 +49,31 @@ jobs:
 
       - name: Deploy to Cloudflare Workers (staging)
         run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-production:
+    name: Deploy to Production
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Inject production D1 database ID
+        run: |
+          sed -i 's/PRODUCTION_D1_DATABASE_ID_PLACEHOLDER/${{ secrets.PRODUCTION_D1_DATABASE_ID }}/' wrangler.jsonc
+
+      - name: Deploy to Cloudflare Workers (production)
+        run: npx wrangler deploy --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

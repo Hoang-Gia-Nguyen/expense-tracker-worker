@@ -664,8 +664,9 @@ describe('POST /api/expense/suggest-category', () => {
         expect(response.status).toBe(400);
     });
 
-    it('should fall back to first category if AI returns invalid category', async () => {
-        mockAiRun.mockResolvedValueOnce({
+    it('should return empty string when AI returns invalid category', async () => {
+        // Make ALL model calls return an invalid category (not matching any)
+        mockAiRun.mockResolvedValue({
             response: 'InvalidCategoryName',
         });
         const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
@@ -677,7 +678,6 @@ describe('POST /api/expense/suggest-category', () => {
 
         expect(response.status).toBe(200);
         const body = await response.json();
-        // Should return empty string when AI returns invalid category
         expect(body.suggestedCategory).toBe('');
     });
 });

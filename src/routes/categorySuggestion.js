@@ -4,14 +4,47 @@ import { getCorsHeaders } from '../middleware/cors';
 import { AppError } from '../utils/AppError';
 import { z } from 'zod';
 
-// Small model used for category suggestion — good balance of speed and accuracy
-const AI_MODEL = '@cf/meta/llama-3.2-3b-instruct';
+// Models used for category suggestion — primary + fallback
+const AI_MODELS = [
+  '@cf/meta/llama-3.2-3b-instruct',
+  '@hf/google/gemma-2-2b-it',
+];
 
 const SuggestCategorySchema = z.object({
     amount: z.number({ message: "Amount must be a number" }),
     description: z.string().min(1, { message: "Description cannot be empty" }),
     categories: z.array(z.string().min(1)).min(1, { message: "At least one category is required" }),
 });
+
+/**
+ * Find the closest matching category from the list using fuzzy matching.
+ */
+function findClosestCategory(raw, categories) {
+  const cleaned = raw.replace(/[^a-zA-ZÀ-ỹ0-9\s\-/]/g, '').trim();
+
+  // 1. Exact match (case-insensitive)
+  const exact = categories.find(cat => cat.toLowerCase() === cleaned.toLowerCase());
+  if (exact) return exact;
+
+  // 2. Partial match — category is contained in the AI output
+  const contained = categories.find(cat => cleaned.toLowerCase().includes(cat.toLowerCase()));
+  if (contained) return contained;
+
+  // 3. Partial match — AI output is contained in a category name
+  const partOf = categories.find(cat => cat.toLowerCase().includes(cleaned.toLowerCase()));
+  if (partOf) return partOf;
+
+  // 4. Token overlap scoring
+  const cleanedLower = cleaned.toLowerCase();
+  const scored = categories.map(cat => ({
+    cat,
+    score: cat.toLowerCase().split(/[\s/]+/).filter(token => cleanedLower.includes(token)).length,
+  }));
+  const best = scored.reduce((a, b) => (a.score > b.score ? a : b));
+  if (best.score > 0) return best.cat;
+
+  return null;
+}
 
 const suggestionRouter = Router();
 
@@ -26,45 +59,63 @@ suggestionRouter.post('/api/expense/suggest-category', async (request, env, cont
             throw new AppError('AI binding not available', 503);
         }
 
-        const systemPrompt = `You are a category suggestion assistant for an expense tracker. Your task is to suggest the most appropriate category for a given expense description and amount.
+        const categoryList = categories.join(', ');
 
-Available categories: ${categories.join(', ')}
+        const systemPrompt = `You are a category suggestion assistant for an expense tracker.
+Available categories: ${categoryList}
 
-Rules:
-- Analyze both the description and the amount to determine the most fitting category.
-- Consider typical expense patterns (e.g., groceries -> Food, gas -> Transportation).
-- Respond with ONLY the exact category name from the list above. No punctuation, no explanation, no extra text.
-- If uncertain, choose the most reasonable category from the list.`;
+Respond with ONLY the exact category name from the list. No punctuation, no explanation, no extra text.
 
-        const userPrompt = `Description: "${description}"\nAmount: ${amount} VND\n\nWhich category from [${categories.join(', ')}] fits best?`;
+Examples:
+- "Bought groceries at supermarket" 50000 VND -> Food
+- "Bus ticket" 15000 VND -> Transportation
+- "Doctor visit" 200000 VND -> Medical/Utility
+- "Electric bill" 500000 VND -> Home
+- "Coffee with friends" 100000 VND -> Entertainment`;
 
-        const response = await env.AI.run(AI_MODEL, {
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt },
-            ],
-            max_tokens: 50,
-            temperature: 0.1,
-        });
+        const userPrompt = `${description} ${amount} VND ->`;
 
+        // Try each model in order until one succeeds
         let suggestedCategory = '';
-        if (typeof response === 'object' && response.response) {
-            suggestedCategory = response.response.trim();
-        } else if (typeof response === 'string') {
-            suggestedCategory = response.trim();
+        let lastError = null;
+
+        for (const model of AI_MODELS) {
+            try {
+                const response = await env.AI.run(model, {
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt },
+                    ],
+                    max_tokens: 20,
+                    temperature: 0.05,
+                });
+
+                let raw = '';
+                if (typeof response === 'object' && response.response) {
+                    raw = response.response.trim();
+                } else if (typeof response === 'string') {
+                    raw = response.trim();
+                }
+
+                console.log(`[AI Suggest] Model ${model} raw response: "${raw}"`);
+
+                const matched = findClosestCategory(raw, categories);
+                if (matched) {
+                    suggestedCategory = matched;
+                    console.log(`[AI Suggest] Matched to: "${matched}"`);
+                    break;
+                } else {
+                    console.log(`[AI Suggest] Model ${model} returned invalid category, trying next`);
+                }
+            } catch (modelError) {
+                lastError = modelError;
+                console.warn(`[AI Suggest] Model ${model} failed: ${modelError.message}`);
+                // Continue to next model
+            }
         }
 
-        // Clean up the response - remove any extra punctuation or whitespace
-        suggestedCategory = suggestedCategory.replace(/[^a-zA-ZÀ-ỹ0-9\s\-/]/g, '').trim();
-
-        // Validate the AI response against the available categories
-        const isValidCategory = categories.some(
-            cat => cat.toLowerCase() === suggestedCategory.toLowerCase()
-        );
-
-        if (!isValidCategory) {
-            // Return empty when AI can't determine a valid category
-            suggestedCategory = '';
+        if (!suggestedCategory && lastError) {
+            console.error(`[AI Suggest] All models failed. Last error: ${lastError.message}`);
         }
 
         return new Response(JSON.stringify({ suggestedCategory }), {

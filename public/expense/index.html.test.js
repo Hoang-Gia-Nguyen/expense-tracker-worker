@@ -73,4 +73,14 @@ describe('index.html structure', () => {
     expect(cardList.tagName).toBe('DIV');
     expect(cardList.id).toBe('expense-card-list');
   });
+
+  it('includes AI suggestion badges for category fields', () => {
+    const aiBadge = document.getElementById('ai-suggestion-badge');
+    expect(aiBadge).toBeTruthy();
+    expect(aiBadge.textContent).toContain('AI');
+
+    const modifyAiBadge = document.getElementById('modify-ai-suggestion-badge');
+    expect(modifyAiBadge).toBeTruthy();
+    expect(modifyAiBadge.textContent).toContain('AI');
+  });
 });

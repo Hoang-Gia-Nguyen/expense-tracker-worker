@@ -17,7 +17,7 @@
         {
           "binding": "D1_DATABASE",
           "database_name": "mony",
-          "database_id": "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
+          "database_id": "PRODUCTION_D1_DATABASE_ID_PLACEHOLDER"
         }
       ],
       "analytics_engine_datasets": [

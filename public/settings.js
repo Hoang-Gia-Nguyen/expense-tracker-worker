@@ -10,7 +10,7 @@ const BUILTIN_CATEGORIES = ['Uncategorized'];
 const DEFAULT_SETTINGS = {
   categories: [
     'Food', 'Medical/Utility', 'Home', 'Transportation',
-    'Entertainment', 'Gift', 'Baby', 'Uncategorized',
+    'Entertainment', 'Gift', 'Baby', 'Other', 'Uncategorized',
   ],
   budgets: {
     Food: 5000000,
@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS = {
     Transportation: 1000000,
     Entertainment: 1500000,
     Home: 2000000,
-    Baby: 0,
+    Baby: 15000000,
     Uncategorized: 0,
   },
   totalBudget: 20000000,
@@ -30,9 +30,10 @@ const DEFAULT_SETTINGS = {
     Entertainment: '#9966FF',
     Baby: '#FF9F40',
     Gift: '#C9CBCF',
+    Other: '#808080',
     Uncategorized: '#ADADAD',
   },
-  categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Uncategorized'],
+  categoryOrder: ['Food', 'Baby', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Other', 'Uncategorized'],
   startOfMonthCategories: ['Home', 'Baby'],
   theme: 'light',
 };
@@ -52,46 +53,6 @@ function getDefaultColor(index) {
  * Merge saved settings with defaults to ensure all keys exist.
  */
 function mergeSettings(saved) {
-  // Migrate "Other" → "Uncategorized" in saved data
-  if (saved.categories && Array.isArray(saved.categories)) {
-    const otherIdx = saved.categories.indexOf('Other');
-    if (otherIdx !== -1) {
-      saved.categories[otherIdx] = 'Uncategorized';
-      // Deduplicate
-      saved.categories = [...new Set(saved.categories)];
-    }
-  }
-  if (saved.categoryOrder && Array.isArray(saved.categoryOrder)) {
-    const otherOrderIdx = saved.categoryOrder.indexOf('Other');
-    if (otherOrderIdx !== -1) {
-      saved.categoryOrder[otherOrderIdx] = 'Uncategorized';
-      saved.categoryOrder = [...new Set(saved.categoryOrder)];
-    }
-  }
-  if (saved.startOfMonthCategories && Array.isArray(saved.startOfMonthCategories)) {
-    const otherSomIdx = saved.startOfMonthCategories.indexOf('Other');
-    if (otherSomIdx !== -1) {
-      saved.startOfMonthCategories[otherSomIdx] = 'Uncategorized';
-    }
-  }
-  // Merge "Other" color into "Uncategorized" if "Uncategorized" doesn't have its own
-  if (saved.categoryColors) {
-    if (!saved.categoryColors.Uncategorized && saved.categoryColors.Other) {
-      saved.categoryColors.Uncategorized = saved.categoryColors.Other;
-    }
-    delete saved.categoryColors.Other;
-  }
-  // Merge "Other" budget into "Uncategorized"
-  if (saved.budgets) {
-    if (saved.budgets.Other !== undefined) {
-      if (saved.budgets.Other > 0) {
-        // Accumulate budgets if both exist
-        saved.budgets.Uncategorized = (saved.budgets.Uncategorized || 0) + saved.budgets.Other;
-      }
-      delete saved.budgets.Other;
-    }
-  }
-
   const merged = {
     ...DEFAULT_SETTINGS,
     ...saved,

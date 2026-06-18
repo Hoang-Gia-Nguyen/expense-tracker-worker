@@ -4,6 +4,9 @@ import { getCorsHeaders } from '../middleware/cors';
 import { AppError } from '../utils/AppError';
 import { z } from 'zod';
 
+// Small model used for category suggestion — good balance of speed and accuracy
+const AI_MODEL = '@cf/meta/llama-3.2-3b-instruct';
+
 const SuggestCategorySchema = z.object({
     amount: z.number({ message: "Amount must be a number" }),
     description: z.string().min(1, { message: "Description cannot be empty" }),
@@ -35,7 +38,7 @@ Rules:
 
         const userPrompt = `Description: "${description}"\nAmount: ${amount} VND\n\nWhich category from [${categories.join(', ')}] fits best?`;
 
-        const response = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
+        const response = await env.AI.run(AI_MODEL, {
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
@@ -54,18 +57,14 @@ Rules:
         // Clean up the response - remove any extra punctuation or whitespace
         suggestedCategory = suggestedCategory.replace(/[^a-zA-ZÀ-ỹ0-9\s\-/]/g, '').trim();
 
-        // Validate that the suggested category is in the provided list
+        // Validate the AI response against the available categories
         const isValidCategory = categories.some(
             cat => cat.toLowerCase() === suggestedCategory.toLowerCase()
         );
 
         if (!isValidCategory) {
-            // Fallback: try to find a close match
-            const lowerSuggested = suggestedCategory.toLowerCase();
-            const match = categories.find(
-                cat => cat.toLowerCase() === lowerSuggested
-            );
-            suggestedCategory = match || categories[0];
+            // Fallback to the first available category if AI returns something unexpected
+            suggestedCategory = categories[0];
         }
 
         return new Response(JSON.stringify({ suggestedCategory }), {

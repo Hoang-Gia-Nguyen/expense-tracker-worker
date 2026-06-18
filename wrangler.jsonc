@@ -1,50 +1,84 @@
 {
-  "name": "expense-tracker",
-  "main": "index.js",
-  "compatibility_date": "2025-07-27",
-  "assets": {
-    "directory": "./public/"
-  },
-  "env": {
-    "production": {
-      "routes": [
-        {
-          "pattern": "expensetracker.hgnlab.org",
-          "custom_domain": true
-        }
-      ],
-      "d1_databases": [
-        {
-          "binding": "D1_DATABASE",
-          "database_name": "mony",
-          "database_id": "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
-        }
-      ],
-      "analytics_engine_datasets": [
-        {
-          "binding": "ANALYTICS_TEST",
-          "dataset": "ANALYTICS_TEST"
-        }
-      ],
-      "ai": [
-        {
-          "binding": "AI"
-        }
-      ]
-    },
-    "development": {
-      "d1_databases": [
-        {
-          "binding": "D1_DATABASE",
-          "database_name": "mony-development-db",
-          "database_id": "ea700681-91ef-4825-bbe4-7ee90f9519be"
-        }
-      ],
-      "ai": [
-        {
-          "binding": "AI"
-        }
-      ]
-    }
-  }
+	"name": "expense-tracker",
+	"main": "index.js",
+	"compatibility_date": "2025-07-27",
+	"assets": {
+		"directory": "./public/"
+	},
+	"env": {
+		"production": {
+			"routes": [
+				{
+					"pattern": "expensetracker.hgnlab.org",
+					"custom_domain": true
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "D1_DATABASE",
+					"database_name": "mony",
+					"database_id": "5154b21b-3a60-46d9-aee0-fd26d83ea2f1"
+				}
+			],
+			"analytics_engine_datasets": [
+				{
+					"binding": "ANALYTICS_TEST",
+					"dataset": "ANALYTICS_TEST"
+				}
+			],
+			"ai": [
+				{
+					"binding": "AI"
+				}
+			]
+		},
+		"development": {
+			"d1_databases": [
+				{
+					"binding": "D1_DATABASE",
+					"database_name": "mony-development-db",
+					"database_id": "ea700681-91ef-4825-bbe4-7ee90f9519be"
+				}
+			],
+			"ai": [
+				{
+					"binding": "AI"
+				}
+			]
+		},
+		"staging": {
+			"routes": [
+				{
+					"pattern": "staging.expensetracker.hgnlab.org",
+					"custom_domain": true
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "D1_DATABASE",
+					"database_name": "mony-staging-db",
+					"database_id": "STAGING_D1_DATABASE_ID_PLACEHOLDER"
+				}
+			],
+			"analytics_engine_datasets": [
+				{
+					"binding": "ANALYTICS_TEST",
+					"dataset": "ANALYTICS_TEST"
+				}
+			],
+			"ai": [
+				{
+					"binding": "AI"
+				}
+			]
+		}
+	},
+	"d1_databases": [
+		{
+			"binding": "mony_staging_db",
+			"database_name": "mony-staging-db",
+			"database_id": "276c536d-0d91-4f1e-b294-a97442cf0815",
+			"remote": true
+		}
+	]
 }

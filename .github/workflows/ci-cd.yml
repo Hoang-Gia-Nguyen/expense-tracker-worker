@@ -1,0 +1,54 @@
+name: CI/CD — codex/main
+
+on:
+  push:
+    branches: [codex/main]
+  pull_request:
+    branches: [codex/main]
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+        env:
+          NODE_ENV: test
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Inject staging D1 database ID
+        run: |
+          sed -i 's/STAGING_D1_DATABASE_ID_PLACEHOLDER/${{ secrets.STAGING_D1_DATABASE_ID }}/' wrangler.jsonc
+
+      - name: Deploy to Cloudflare Workers (staging)
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

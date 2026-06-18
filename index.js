@@ -7,6 +7,7 @@ import { expensesRouter } from './src/routes/expenses';
 import { summaryRouter } from './src/routes/summary';
 import { insightsRouter } from './src/routes/insights';
 import { configRouter } from './src/routes/api/config'; // Import config router
+import { suggestionRouter } from './src/routes/categorySuggestion';
 
 const router = Router();
 
@@ -46,6 +47,7 @@ staticRoutes.forEach(path => {
 });
 
 // Mount API routers
+router.all('/api/expense/suggest-category', suggestionRouter.handle); // Mount the category suggestion router (before /api/expense to avoid itty-router prefix matching)
 router.all('/api/expense', expensesRouter.handle);
 router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);

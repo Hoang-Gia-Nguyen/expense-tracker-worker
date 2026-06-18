@@ -94,12 +94,57 @@ export function createExpenseTrackerApp(domElements) {
         return allValid;
     }
 
+    // Debounce timer for category suggestion
+    let _suggestCategoryTimer = null;
+    let _skipModifySuggest = false;
+
+    async function _autoSuggestCategory(amount, description, categorySelect, badgeEl) {
+        // Clear previous timer
+        if (_suggestCategoryTimer) {
+            clearTimeout(_suggestCategoryTimer);
+        }
+
+        // Check if both fields have values
+        const amountDigits = amount.replace(/\./g, '');
+        if (!amountDigits || amountDigits === '-' || !description.trim()) {
+            if (badgeEl) badgeEl.style.display = 'none';
+            return;
+        }
+
+        // Debounce - wait 800ms after last input
+        _suggestCategoryTimer = setTimeout(async () => {
+            try {
+                const categories = getCategories();
+                const response = await fetch('/api/expense/suggest-category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: parseInt(amountDigits, 10),
+                        description: description.trim(),
+                        categories,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.suggestedCategory && categories.includes(data.suggestedCategory)) {
+                        categorySelect.value = data.suggestedCategory;
+                        categorySelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (badgeEl) badgeEl.style.display = '';
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to auto-suggest category:', e);
+            }
+        }, 800);
+    }
+
     function renderChart(summary) {
         const chartLabels = [];
         const chartData = [];
         const chartColors = [];
 
-        const budgetedCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
+        const budgetedCategories = categoryOrderFn().filter(category => (monthlyBudgetFn()[category] || 0) > 0 && !startOfMonthCategoriesFn().includes(category));
 
         budgetedCategories.forEach(category => {
             if (summary[category] > 0) {
@@ -138,7 +183,7 @@ export function createExpenseTrackerApp(domElements) {
         const [year, month] = monthPicker.value.split('-');
         const daysInMonth = new Date(year, month, 0).getDate();
 
-        const dailySpendingCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
+        const dailySpendingCategories = categoryOrderFn().filter(category => (monthlyBudgetFn()[category] || 0) > 0 && !startOfMonthCategoriesFn().includes(category));
         const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudgetFn()[category] || 0), 0);
 
         const dailyTotals = Array(daysInMonth).fill(0);
@@ -252,7 +297,7 @@ export function createExpenseTrackerApp(domElements) {
                 </div>
             `;
 
-            const dailySpendingCategories = categoryOrderFn().filter(category => monthlyBudgetFn().hasOwnProperty(category) && !startOfMonthCategoriesFn().includes(category));
+            const dailySpendingCategories = categoryOrderFn().filter(category => (monthlyBudgetFn()[category] || 0) > 0 && !startOfMonthCategoriesFn().includes(category));
             const dailySpent = dailySpendingCategories.reduce((sum, category) => sum + (summary[category] || 0), 0);
             const dailyBudget = dailySpendingCategories.reduce((sum, category) => sum + (monthlyBudgetFn()[category] || 0), 0);
             const dailyPercentage = dailyBudget > 0 ? Math.round((dailySpent / dailyBudget) * 100) : 0;
@@ -262,7 +307,7 @@ export function createExpenseTrackerApp(domElements) {
                 <div class="card text-center">
                     <div class="card-header">
                         Daily Spending Summary
-                        <i class="bi bi-question-circle-fill" data-bs-toggle="tooltip" data-bs-placement="top" title="Excludes Home, Baby, Gift, and Other categories."></i>
+                        <i class="bi bi-question-circle-fill" data-bs-toggle="tooltip" data-bs-placement="top" title="Excludes start-of-month and unbudgeted categories."></i>
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Total Spent: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dailySpent)}</h5>
@@ -299,7 +344,7 @@ export function createExpenseTrackerApp(domElements) {
             startOfMonthSummaryDiv.innerHTML = startOfMonthHtml;
 
             let budgetedHtml = '<h5>Budgeted Categories</h5><div class="row">';
-            Object.entries(monthlyBudgetFn()).filter(([category]) => !startOfMonthCategoriesFn().includes(category)).forEach(([category, budget]) => {
+            Object.entries(monthlyBudgetFn()).filter(([category, budget]) => budget > 0 && !startOfMonthCategoriesFn().includes(category)).forEach(([category, budget]) => {
                 const total = summary[category] || 0;
                 const percentage = Math.round((total / budget) * 100);
                 const progressBarColor = getProgressBarColor(percentage);
@@ -321,7 +366,10 @@ export function createExpenseTrackerApp(domElements) {
             budgetedHtml += '</div>';
             budgetedSummaryDiv.innerHTML = budgetedHtml;
 
-            const otherSpending = Object.entries(summary).filter(([category]) => !monthlyBudgetFn()[category]);
+            const otherSpending = Object.entries(summary).filter(([category]) => {
+            const budget = monthlyBudgetFn()[category];
+            return (budget === undefined || budget === 0) && !startOfMonthCategoriesFn().includes(category);
+          });
             let otherSpendingHtml = '<h5>Other Spending</h5><div class="row">';
             if (otherSpending.length > 0) {
                 otherSpending.sort(([, a], [, b]) => b - a).forEach(([category, total]) => {
@@ -518,6 +566,9 @@ export function createExpenseTrackerApp(domElements) {
                 modifyCategoryInput.appendChild(opt);
             }
             modifyCategoryInput.value = expenseToModify.category;
+            // Prevent auto-suggest from immediately overriding on modal open
+            _skipModifySuggest = true;
+            setTimeout(() => { _skipModifySuggest = false; }, 1200);
             modifyExpenseModal.show();
         }
     }
@@ -640,6 +691,30 @@ export function createExpenseTrackerApp(domElements) {
             }
         });
     });
+
+    // Auto-suggest category when both amount and description are filled
+    const aiBadge = document.getElementById('ai-suggestion-badge');
+    const modifyAiBadge = document.getElementById('modify-ai-suggestion-badge');
+
+    function _onAddFormSuggest() {
+        _autoSuggestCategory(amountInput.value, descriptionInput.value, categoryInput, aiBadge);
+    }
+    amountInput.addEventListener('input', _onAddFormSuggest);
+    descriptionInput.addEventListener('input', _onAddFormSuggest);
+    categoryInput.addEventListener('change', function _onCategoryManualChange() {
+        if (aiBadge) aiBadge.style.display = 'none';
+    });
+
+    function _onModifyFormSuggest() {
+        if (_skipModifySuggest) return;
+        _autoSuggestCategory(modifyAmountInput.value, modifyDescriptionInput.value, modifyCategoryInput, modifyAiBadge);
+    }
+    modifyAmountInput.addEventListener('input', _onModifyFormSuggest);
+    modifyDescriptionInput.addEventListener('input', _onModifyFormSuggest);
+    modifyCategoryInput.addEventListener('change', function _onModifyCategoryManualChange() {
+        if (modifyAiBadge) modifyAiBadge.style.display = 'none';
+    });
+
 
     monthPicker.addEventListener('change', fetchExpensesForMonth);
     categoryFilter.addEventListener('change', applyFilter); // Just apply the filter locally

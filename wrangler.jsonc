@@ -45,7 +45,7 @@
     "staging": {
       "routes": [
         {
-          "pattern": "staging.expensetracker.hgnlab.org",
+          "pattern": "stagetracker.hgnlab.org",
           "custom_domain": true
         }
       ],

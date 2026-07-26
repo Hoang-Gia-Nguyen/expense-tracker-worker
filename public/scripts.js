@@ -94,52 +94,6 @@ export function createExpenseTrackerApp(domElements) {
         return allValid;
     }
 
-    // Debounce timer for category suggestion
-    let _suggestCategoryTimer = null;
-    let _skipModifySuggest = false;
-    let _manualCategorySelected = false;
-
-    async function _autoSuggestCategory(amount, description, categorySelect, badgeEl) {
-        if (_manualCategorySelected) return;
-        // Clear previous timer
-        if (_suggestCategoryTimer) {
-            clearTimeout(_suggestCategoryTimer);
-        }
-
-        // Check if both fields have values
-        const amountDigits = amount.replace(/\./g, '');
-        if (!amountDigits || amountDigits === '-' || !description.trim()) {
-            if (badgeEl) badgeEl.style.display = 'none';
-            return;
-        }
-
-        // Debounce - wait 800ms after last input
-        _suggestCategoryTimer = setTimeout(async () => {
-            try {
-                const categories = getCategories();
-                const response = await fetch('/api/expense/suggest-category', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        amount: parseInt(amountDigits, 10),
-                        description: description.trim(),
-                        categories,
-                    }),
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.suggestedCategory && categories.includes(data.suggestedCategory)) {
-                        categorySelect.value = data.suggestedCategory;
-                        categorySelect.dispatchEvent(new Event('change', { bubbles: true }));
-                        if (badgeEl) badgeEl.style.display = '';
-                    }
-                }
-            } catch (e) {
-                console.warn('Failed to auto-suggest category:', e);
-            }
-        }, 800);
-    }
 
     function renderChart(summary) {
         const chartLabels = [];
@@ -533,7 +487,6 @@ export function createExpenseTrackerApp(domElements) {
                 fetchExpensesForMonth(); // Refetch all data for the month
                 expenseForm.reset();
                 dateInput.value = todayString;
-                _manualCategorySelected = false;
             } else {
                 console.error('Failed to send expense:', await response.text());
                 alert(`Failed to add expense. Server responded: ${response.statusText}. Please try again.`);
@@ -570,8 +523,6 @@ export function createExpenseTrackerApp(domElements) {
             }
             modifyCategoryInput.value = expenseToModify.category;
             // Prevent auto-suggest from immediately overriding on modal open
-            _skipModifySuggest = true;
-            setTimeout(() => { _skipModifySuggest = false; }, 1200);
             modifyExpenseModal.show();
         }
     }
@@ -693,30 +644,6 @@ export function createExpenseTrackerApp(domElements) {
                 input.classList.remove('is-invalid');
             }
         });
-    });
-
-    // Auto-suggest category when both amount and description are filled
-    const aiBadge = document.getElementById('ai-suggestion-badge');
-    const modifyAiBadge = document.getElementById('modify-ai-suggestion-badge');
-
-    function _onAddFormSuggest() {
-        _autoSuggestCategory(amountInput.value, descriptionInput.value, categoryInput, aiBadge);
-    }
-    amountInput.addEventListener('input', _onAddFormSuggest);
-    descriptionInput.addEventListener('input', _onAddFormSuggest);
-    categoryInput.addEventListener('change', function _onCategoryManualChange() {
-        _manualCategorySelected = true;
-        if (aiBadge) aiBadge.style.display = 'none';
-    });
-
-    function _onModifyFormSuggest() {
-        if (_skipModifySuggest) return;
-        _autoSuggestCategory(modifyAmountInput.value, modifyDescriptionInput.value, modifyCategoryInput, modifyAiBadge);
-    }
-    modifyAmountInput.addEventListener('input', _onModifyFormSuggest);
-    modifyDescriptionInput.addEventListener('input', _onModifyFormSuggest);
-    modifyCategoryInput.addEventListener('change', function _onModifyCategoryManualChange() {
-        if (modifyAiBadge) modifyAiBadge.style.display = 'none';
     });
 
 

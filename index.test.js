@@ -17,11 +17,7 @@ const mockD1Database = {
 };
 
 // Mock the Cloudflare environment (env)
-const mockAiRun = vi.fn();
 
-const mockAi = {
-    run: mockAiRun,
-};
 
 const mockEnv = {
     D1_DATABASE: mockD1Database,
@@ -31,7 +27,6 @@ const mockEnv = {
     ANALYTICS_TEST: {
         writeDataPoint: vi.fn(),
     },
-    AI: mockAi,
 };
 
 // Helper function to create a mock Request
@@ -603,84 +598,6 @@ describe('PATCH /api/expenses/category', () => {
     });
 });
 
-describe('POST /api/expense/suggest-category', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockAiRun.mockReset();
-        // Default mock: return a valid category from the list
-        mockAiRun.mockResolvedValue({
-            response: 'Food',
-        });
-    });
-
-    it('should return a suggested category', async () => {
-        const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
-            amount: 50000,
-            description: 'Bought groceries at supermarket',
-            categories: ['Food', 'Transportation', 'Entertainment', 'Home', 'Uncategorized'],
-        });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const body = await response.json();
-        expect(body).toHaveProperty('suggestedCategory');
-        expect(['Food', 'Transportation', 'Entertainment', 'Home', 'Uncategorized']).toContain(body.suggestedCategory);
-        expect(mockAiRun).toHaveBeenCalledWith(
-            '@cf/meta/llama-3.2-3b-instruct',
-            expect.objectContaining({
-                messages: expect.arrayContaining([
-                    expect.objectContaining({ role: 'system' }),
-                    expect.objectContaining({ role: 'user' }),
-                ]),
-            })
-        );
-    });
-
-    it('should return 400 if amount is missing', async () => {
-        const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
-            description: 'Test expense',
-            categories: ['Food', 'Transportation'],
-        });
-        const response = await worker.fetch(request, mockEnv);
-        expect(response.status).toBe(400);
-    });
-
-    it('should return 400 if description is missing', async () => {
-        const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
-            amount: 50000,
-            categories: ['Food', 'Transportation'],
-        });
-        const response = await worker.fetch(request, mockEnv);
-        expect(response.status).toBe(400);
-    });
-
-    it('should return 400 if categories list is empty', async () => {
-        const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
-            amount: 50000,
-            description: 'Test expense',
-            categories: [],
-        });
-        const response = await worker.fetch(request, mockEnv);
-        expect(response.status).toBe(400);
-    });
-
-    it('should return empty string when AI returns invalid category', async () => {
-        // Make ALL model calls return an invalid category (not matching any)
-        mockAiRun.mockResolvedValue({
-            response: 'InvalidCategoryName',
-        });
-        const request = createMockRequest('http://localhost/api/expense/suggest-category', 'POST', { 'Content-Type': 'application/json' }, {
-            amount: 25000,
-            description: 'Bus ticket',
-            categories: ['Food', 'Transportation', 'Entertainment'],
-        });
-        const response = await worker.fetch(request, mockEnv);
-
-        expect(response.status).toBe(200);
-        const body = await response.json();
-        expect(body.suggestedCategory).toBe('');
-    });
-});
 
 
 describe('Catch-all 404', () => {

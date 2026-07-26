@@ -13,3 +13,7 @@ ANALYSIS.md
 
 SUMMARY_SUGGESTIONS.md
 coverage/
+
+# Agent artifacts
+.agents/
+data/

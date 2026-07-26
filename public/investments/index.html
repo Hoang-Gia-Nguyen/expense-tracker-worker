@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+  (function() {
+    try {
+      var s = JSON.parse(localStorage.getItem('expense_tracker_settings'));
+      if (s && s.theme) {
+        document.documentElement.setAttribute('data-bs-theme', s.theme);
+        var toggleBtn = document.getElementById('theme-toggle-btn');
+        if (toggleBtn) {
+          var icon = toggleBtn.querySelector('i');
+          if (icon) {
+            icon.className = s.theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+          }
+          toggleBtn.title = s.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        }
+      }
+    } catch(e) {}
+  })();
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investments - Expense Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/theme.css">
+    <link rel="icon" type="image/png" href="/favico.png">
+<style>.spinner { animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Expense Tracker</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/expense">Expense</a>
+                <a class="nav-link" href="/summary">Summary</a>
+                <a class="nav-link" href="/insights">Insights</a>
+                <a class="nav-link active" aria-current="page" href="/investments">Investments</a>
+                <a class="nav-link" href="/big-expenses">Big Expenses</a>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <button class="btn btn-outline-secondary btn-sm" id="theme-toggle-btn" title="Switch to dark theme">
+                    <i class="bi bi-sun-fill"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" id="settings-btn" title="Settings">
+                    <i class="bi bi-gear-fill"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">Investment Portfolio</h1>
+        <p class="text-muted text-center mb-4">Track your gold and other investments — buy/sell transactions, holdings, and P&L.</p>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4" id="stats-cards">
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Gold Held</div>
+                        <div class="h4 mb-0" id="gold-held">0</div>
+                        <div class="text-muted small">chỉ</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Invested</div>
+                        <div class="h5 mb-0" id="total-invested">0 ₫</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Avg Cost / chỉ</div>
+                        <div class="h5 mb-0" id="avg-cost">0 ₫</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Current Price</div>
+                        <div class="h5 mb-0">
+                            <input type="text" inputmode="decimal" class="form-control form-control-sm text-center" id="current-price" placeholder="Price/chỉ" style="max-width:140px;margin:0 auto;">
+                        </div>
+                        <div id="live-price-info" class="mt-2 small">
+                            <button class="btn btn-sm btn-outline-primary py-0 px-1" id="fetch-live-price-btn" title="Fetch live PNJ price">
+                                <i class="bi bi-arrow-repeat"></i> Live
+                            </button>
+                            <span id="live-price-display" class="text-muted ms-1"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 mx-auto">
+                <div class="card text-center h-100 border-success" id="pnl-card">
+                    <div class="card-body">
+                        <div class="text-muted small">Unrealized P&amp;L</div>
+                        <div class="h4 mb-0" id="unrealized-pnl">—</div>
+                        <div class="text-muted small" id="pnl-percent">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Value -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6 mx-auto">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="text-muted small">Market Value</div>
+                        <div class="h3 mb-0" id="market-value">0 ₫</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Add Transaction</h5>
+                <form id="investment-form">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="type" class="form-label">Type</label>
+                            <select class="form-select" id="type" required>
+                                <option value="MUA">MUA</option>
+                                <option value="BAN">BÁN</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="quantity" class="form-label">Quantity (chỉ)</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="quantity" placeholder="0.0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="unit-price" class="form-label">Unit Price (₫)</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="unit-price" placeholder="Enter price" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="total-value" class="form-label">Total Value</label>
+                            <input type="text" class="form-control" id="total-value" readonly>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Add Transaction</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Seed Data Button -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Transaction History</h2>
+            <button class="btn btn-outline-secondary btn-sm" id="seed-btn">
+                <i class="bi bi-download"></i> Load Sample Data
+            </button>
+        </div>
+
+        <div id="empty-state" class="text-center text-muted my-5 d-none">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No transactions yet. Add one above or load sample data.</p>
+        </div>
+
+        <!-- Transaction Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Total Value</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transaction-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/settings.js"></script>
+    <script type="module">
+        import { initSettings, openSettingsModal, toggleTheme } from '/settings.js';
+
+        const STORAGE_KEY = 'expense_tracker_investments';
+
+        // Seed data from user's gold transactions
+        const SEED_DATA = [
+            { date: '2025-01-15', type: 'MUA', quantity: 2, unitPrice: 5655000, totalValue: 11310000 },
+            { date: '2025-02-10', type: 'MUA', quantity: 1, unitPrice: 5800000, totalValue: 5800000 },
+            { date: '2025-03-05', type: 'MUA', quantity: 1, unitPrice: 5720000, totalValue: 5720000 },
+            { date: '2025-04-20', type: 'MUA', quantity: 5, unitPrice: 6010000, totalValue: 30050000 },
+            { date: '2025-05-15', type: 'MUA', quantity: 1, unitPrice: 6300000, totalValue: 6300000 },
+            { date: '2025-06-10', type: 'MUA', quantity: 2, unitPrice: 6620000, totalValue: 13240000 },
+            { date: '2025-07-01', type: 'MUA', quantity: 1, unitPrice: 7500000, totalValue: 7500000 },
+            { date: '2025-07-20', type: 'MUA', quantity: 1, unitPrice: 7640000, totalValue: 7640000 },
+            { date: '2025-08-05', type: 'MUA', quantity: 1, unitPrice: 8320000, totalValue: 8320000 },
+            { date: '2025-08-25', type: 'BAN', quantity: 0.5, unitPrice: 8480000, totalValue: 4240000 },
+        ];
+
+        // DOM refs
+        const form = document.getElementById('investment-form');
+        const dateInput = document.getElementById('date');
+        const typeInput = document.getElementById('type');
+        const quantityInput = document.getElementById('quantity');
+        const unitPriceInput = document.getElementById('unit-price');
+        const totalValueInput = document.getElementById('total-value');
+        const tbody = document.getElementById('transaction-list');
+        const emptyState = document.getElementById('empty-state');
+        const seedBtn = document.getElementById('seed-btn');
+
+        const goldHeldEl = document.getElementById('gold-held');
+        const totalInvestedEl = document.getElementById('total-invested');
+        const avgCostEl = document.getElementById('avg-cost');
+        const marketValueEl = document.getElementById('market-value');
+        const unrealizedPnlEl = document.getElementById('unrealized-pnl');
+        const pnlPercentEl = document.getElementById('pnl-percent');
+        const pnlCard = document.getElementById('pnl-card');
+        const currentPriceInput = document.getElementById('current-price');
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function parseNumberInput(value) {
+            return parseFloat(value.replace(/[.,\s]/g, '').replace(/,/g, '.')) || 0;
+        }
+
+        function loadTransactions() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function saveTransactions(txns) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(txns));
+        }
+
+        function recalcTotalValue() {
+            const qty = parseFloat(quantityInput.value.replace(/,/g, '.')) || 0;
+            const price = parseNumberInput(unitPriceInput.value);
+            totalValueInput.value = (qty * price).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        quantityInput.addEventListener('input', recalcTotalValue);
+        unitPriceInput.addEventListener('input', recalcTotalValue);
+
+        function renderStats(txns) {
+            let goldHeld = 0;
+            let totalCost = 0;
+            let totalQty = 0;
+
+            txns.forEach(t => {
+                if (t.type === 'MUA') {
+                    goldHeld += t.quantity;
+                    totalCost += t.totalValue;
+                    totalQty += t.quantity;
+                } else {
+                    goldHeld -= t.quantity;
+                    // For P&L calculation, we track sold separately
+                }
+            });
+
+            goldHeld = Math.round(goldHeld * 100) / 100;
+            const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+            const currentPrice = parseNumberInput(currentPriceInput.value);
+            const marketValue = currentPrice > 0 ? goldHeld * currentPrice : (goldHeld > 0 ? goldHeld * (avgCost || 0) : 0);
+
+            // Net invested = total buy cost minus total sell proceeds
+            let totalBuyValue = 0;
+            let totalSellValue = 0;
+            txns.forEach(t => {
+                if (t.type === 'MUA') totalBuyValue += t.totalValue;
+                else totalSellValue += t.totalValue;
+            });
+            const netInvested = totalBuyValue - totalSellValue;
+
+            const unrealizedPnl = currentPrice > 0 ? marketValue - netInvested : null;
+            const pnlPercent = (unrealizedPnl !== null && netInvested > 0) ? (unrealizedPnl / netInvested * 100) : null;
+
+            goldHeldEl.textContent = goldHeld.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+            totalInvestedEl.textContent = formatCurrency(totalBuyValue);
+            avgCostEl.textContent = avgCost > 0 ? formatCurrency(Math.round(avgCost)) : '—';
+            marketValueEl.textContent = currentPrice > 0 ? formatCurrency(Math.round(marketValue)) : '—';
+
+            if (unrealizedPnl !== null) {
+                const isProfit = unrealizedPnl >= 0;
+                unrealizedPnlEl.textContent = (isProfit ? '+' : '') + formatCurrency(Math.round(unrealizedPnl));
+                unrealizedPnlEl.className = isProfit ? 'h4 mb-0 text-success' : 'h4 mb-0 text-danger';
+                pnlPercentEl.textContent = (isProfit ? '+' : '') + pnlPercent.toFixed(1) + '%';
+                pnlPercentEl.className = isProfit ? 'text-success' : 'text-danger';
+                pnlCard.className = 'card text-center h-100 ' + (isProfit ? 'border-success' : 'border-danger');
+            } else {
+                unrealizedPnlEl.textContent = '—';
+                unrealizedPnlEl.className = 'h4 mb-0';
+                pnlPercentEl.textContent = 'Set current price';
+                pnlPercentEl.className = 'text-muted small';
+                pnlCard.className = 'card text-center h-100';
+            }
+        }
+
+        function renderTable(txns) {
+            tbody.innerHTML = '';
+
+            if (txns.length === 0) {
+                emptyState.classList.remove('d-none');
+                return;
+            }
+            emptyState.classList.add('d-none');
+
+            // Show newest first
+            const sorted = [...txns].reverse();
+
+            sorted.forEach((t, idx) => {
+                const realIdx = txns.length - 1 - idx;
+                const tr = document.createElement('tr');
+                const isBuy = t.type === 'MUA';
+                tr.innerHTML = `
+                    <td>${t.date}</td>
+                    <td><span class="badge ${isBuy ? 'bg-success' : 'bg-danger'}">${t.type}</span></td>
+                    <td class="text-end">${t.quantity.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 3 })}</td>
+                    <td class="text-end">${formatCurrency(Math.round(t.unitPrice))}</td>
+                    <td class="text-end">${formatCurrency(Math.round(t.totalValue))}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-index="${realIdx}" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Delete handlers
+            tbody.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.dataset.index);
+                    if (!confirm('Delete this transaction?')) return;
+                    const txns = loadTransactions();
+                    txns.splice(idx, 1);
+                    saveTransactions(txns);
+                    renderAll();
+                });
+            });
+        }
+
+        function renderAll() {
+            const txns = loadTransactions();
+            renderStats(txns);
+            renderTable(txns);
+        }
+
+        // Form submit
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const qty = parseFloat(quantityInput.value.replace(/,/g, '.')) || 0;
+            const price = parseNumberInput(unitPriceInput.value);
+
+            if (qty <= 0) {
+                alert('Quantity must be positive.');
+                return;
+            }
+            if (price <= 0) {
+                alert('Unit price must be positive.');
+                return;
+            }
+
+            const txns = loadTransactions();
+            txns.push({
+                date: dateInput.value,
+                type: typeInput.value,
+                quantity: qty,
+                unitPrice: price,
+                totalValue: qty * price,
+            });
+            saveTransactions(txns);
+
+            form.reset();
+            dateInput.value = new Date().toISOString().split('T')[0];
+            totalValueInput.value = '';
+            renderAll();
+        });
+
+        // Current price change
+        currentPriceInput.addEventListener('input', () => {
+            const txns = loadTransactions();
+            renderStats(txns);
+            // Persist current price
+            localStorage.setItem('expense_tracker_current_price', currentPriceInput.value);
+        });
+
+        // Seed data
+        seedBtn.addEventListener('click', () => {
+            if (loadTransactions().length > 0) {
+                if (!confirm('This will replace all existing transactions. Continue?')) return;
+            }
+            saveTransactions(SEED_DATA);
+            renderAll();
+            // Auto-set current price to last transaction's unit price
+            const lastPrice = SEED_DATA[SEED_DATA.length - 1].unitPrice;
+            currentPriceInput.value = lastPrice.toLocaleString('vi-VN');
+            localStorage.setItem('expense_tracker_current_price', currentPriceInput.value);
+            renderAll();
+        });
+
+        // Init
+        initSettings();
+        document.getElementById('settings-btn')?.addEventListener('click', openSettingsModal);
+        document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
+        dateInput.value = new Date().toISOString().split('T')[0];
+
+        // Restore saved current price
+        const savedPrice = localStorage.getItem('expense_tracker_current_price');
+        if (savedPrice) currentPriceInput.value = savedPrice;
+
+        // Live price helpers
+        const livePriceDisplay = document.getElementById('live-price-display');
+        const fetchLivePriceBtn = document.getElementById('fetch-live-price-btn');
+
+        async function fetchLivePrice() {
+            const btn = fetchLivePriceBtn;
+            const icon = btn.querySelector('i');
+            icon.className = 'bi bi-arrow-repeat spinner';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/gold-price');
+                if (!resp.ok) throw new Error('Failed to fetch');
+                const data = await resp.json();
+
+                // Update display
+                livePriceDisplay.textContent =
+                    'PNJ: Mua ' + data.buy.toLocaleString('vi-VN') + ' / Bán ' + data.sell.toLocaleString('vi-VN');
+
+                // Auto-fill current price input with buy price if empty
+                if (!currentPriceInput.value) {
+                    currentPriceInput.value = data.buy.toLocaleString('vi-VN');
+                    localStorage.setItem('expense_tracker_current_price', currentPriceInput.value);
+                    renderAll();
+                }
+            } catch (err) {
+                livePriceDisplay.textContent = 'Không thể lấy giá';
+                console.error('Live price error:', err);
+            } finally {
+                icon.className = 'bi bi-arrow-repeat';
+                btn.disabled = false;
+            }
+        }
+
+        fetchLivePriceBtn.addEventListener('click', fetchLivePrice);
+
+        // Auto-fetch live price on load if no saved price
+        if (!savedPrice) fetchLivePrice();
+        else {
+            // Still show the live price display but don't override saved price
+            fetch('/api/gold-price').then(r => r.json()).then(data => {
+                livePriceDisplay.textContent =
+                    'PNJ: Mua ' + data.buy.toLocaleString('vi-VN') + ' / Bán ' + data.sell.toLocaleString('vi-VN');
+            }).catch(() => {});
+        }
+
+        renderAll();
+    </script>
+</body>
+</html>

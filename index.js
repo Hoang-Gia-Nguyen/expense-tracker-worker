@@ -8,6 +8,7 @@ import { summaryRouter } from './src/routes/summary';
 import { insightsRouter } from './src/routes/insights';
 import { configRouter } from './src/routes/api/config'; // Import config router
 import { bigExpensesRouter } from './src/routes/bigExpenses'; // Import big expenses router
+import { goldPriceRouter } from './src/routes/goldPrice'; // Import gold price router
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/', (request) => {
 });
 
 // Rewrite top-level routes index.html and serve
-const staticRoutes = ['/expense', '/summary', '/insights', '/big-expenses'];
+const staticRoutes = [ '/investments','/expense', '/summary', '/insights', '/big-expenses'];
 staticRoutes.forEach(path => {
   router.all(path, async (request, env, context) => {
     const url = new URL(request.url);
@@ -50,6 +51,7 @@ staticRoutes.forEach(path => {
 router.all('/api/expense', expensesRouter.handle);
 router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);
+router.all('/api/gold-price', goldPriceRouter.handle);
 router.all('/api/config', configRouter.handle); // Mount config router
 router.all('/api/expenses/category', expensesRouter.handle);
 router.all('/api/big-expenses*', bigExpensesRouter.handle); // Mount big expenses router

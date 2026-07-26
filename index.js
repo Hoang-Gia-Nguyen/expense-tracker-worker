@@ -9,6 +9,7 @@ import { insightsRouter } from './src/routes/insights';
 import { configRouter } from './src/routes/api/config'; // Import config router
 import { bigExpensesRouter } from './src/routes/bigExpenses'; // Import big expenses router
 import { goldPriceRouter } from './src/routes/goldPrice'; // Import gold price router
+import { investmentsRouter } from './src/routes/investments'; // Import investments router
 
 const router = Router();
 
@@ -51,6 +52,7 @@ staticRoutes.forEach(path => {
 router.all('/api/expense', expensesRouter.handle);
 router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);
+router.all('/api/investments*', investmentsRouter.handle);
 router.all('/api/gold-price', goldPriceRouter.handle);
 router.all('/api/config', configRouter.handle); // Mount config router
 router.all('/api/expenses/category', expensesRouter.handle);

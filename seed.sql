@@ -504,3 +504,17 @@ INSERT INTO big_expense ("Date", "Amount", "Description") VALUES
 ('2025-03-15', 50000000, 'Sửa nhà - thay mái tôn'),
 ('2025-06-20', 12000000, 'Mua máy giặt mới'),
 ('2025-09-10', 8000000, 'Sửa điều hòa');
+
+-- Investment portfolio seed data (real gold transactions)
+INSERT INTO investment ("Date", "Type", "ProductName", "Quantity", "Unit", "UnitPrice", "TotalValue", "Notes")
+VALUES
+  ('2025-01-15', 'BUY',  'PNJ Gold', 2.0, 'chỉ', 5655000, 11310000, ''),
+  ('2025-02-10', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 5800000, 5800000, ''),
+  ('2025-03-05', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 5720000, 5720000, ''),
+  ('2025-04-20', 'BUY',  'PNJ Gold', 5.0, 'chỉ', 6010000, 30050000, ''),
+  ('2025-05-15', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 6300000, 6300000, ''),
+  ('2025-06-10', 'BUY',  'PNJ Gold', 2.0, 'chỉ', 6620000, 13240000, ''),
+  ('2025-07-01', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 7500000, 7500000, ''),
+  ('2025-07-20', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 7640000, 7640000, ''),
+  ('2025-08-05', 'BUY',  'PNJ Gold', 1.0, 'chỉ', 8320000, 8320000, ''),
+  ('2025-08-25', 'SELL', 'PNJ Gold', 0.5, 'chỉ', 8480000, 4240000, '');

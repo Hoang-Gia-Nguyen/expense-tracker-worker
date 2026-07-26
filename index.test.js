@@ -614,8 +614,8 @@ describe('GET /api/big-expenses', () => {
 
     it('should return big expenses for a valid year', async () => {
         const mockItems = [
-            { rowid: 1, date: '2025-03-15', amount: 50000000, description: 'Sửa nhà', category: 'Home Renovation' },
-            { rowid: 2, date: '2025-06-20', amount: 12000000, description: 'Máy giặt', category: 'Appliance' },
+            { rowid: 1, date: '2025-03-15', amount: 50000000, description: 'Sửa nhà' },
+            { rowid: 2, date: '2025-06-20', amount: 12000000, description: 'Máy giặt' },
         ];
         mockAll.mockResolvedValueOnce({ results: mockItems });
 
@@ -670,14 +670,14 @@ describe('POST /api/big-expenses', () => {
     });
 
     it('should add a new big expense', async () => {
-        const newExpense = { date: '2025-03-15', amount: 50000000, description: 'Sửa nhà', category: 'Home Renovation' };
+        const newExpense = { date: '2025-03-15', amount: 50000000, description: 'Sửa nhà' };
         const request = createMockRequest('http://localhost/api/big-expenses', 'POST', { 'Content-Type': 'application/json' }, newExpense);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(201);
         await expect(response.text()).resolves.toBe('Big expense added successfully');
-        expect(mockPrepare).toHaveBeenCalledWith('INSERT INTO big_expense (Date, Amount, Description, Category) VALUES (?, ?, ?, ?)');
-        expect(mockBind).toHaveBeenCalledWith('2025-03-15', 50000000, 'Sửa nhà', 'Home Renovation');
+        expect(mockPrepare).toHaveBeenCalledWith('INSERT INTO big_expense (Date, Amount, Description) VALUES (?, ?, ?)');
+        expect(mockBind).toHaveBeenCalledWith('2025-03-15', 50000000, 'Sửa nhà');
     });
 
     it('should return 400 if required fields missing', async () => {
@@ -700,20 +700,20 @@ describe('PUT /api/big-expenses', () => {
     });
 
     it('should update a big expense', async () => {
-        const updateData = { id: 1, date: '2025-03-16', amount: 55000000, description: 'Sửa nhà - thêm cửa', category: 'Home Renovation' };
+        const updateData = { id: 1, date: '2025-03-16', amount: 55000000, description: 'Sửa nhà - thêm cửa' };
         const request = createMockRequest('http://localhost/api/big-expenses', 'PUT', { 'Content-Type': 'application/json' }, updateData);
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(200);
         await expect(response.text()).resolves.toBe('Big expense updated successfully');
         expect(mockPrepare).toHaveBeenCalledWith(
-            'UPDATE big_expense SET Date = ?, Amount = ?, Description = ?, Category = ? WHERE rowid = ?'
+            'UPDATE big_expense SET Date = ?, Amount = ?, Description = ? WHERE rowid = ?'
         );
     });
 
     it('should return 404 if expense not found', async () => {
         mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 0 } });
-        const updateData = { id: 999, date: '2025-03-16', amount: 55000000, description: 'Test', category: 'Test' };
+        const updateData = { id: 999, date: '2025-03-16', amount: 55000000, description: 'Test' };
         const request = createMockRequest('http://localhost/api/big-expenses', 'PUT', { 'Content-Type': 'application/json' }, updateData);
         const response = await worker.fetch(request, mockEnv);
 

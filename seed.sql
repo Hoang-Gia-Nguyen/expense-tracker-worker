@@ -500,7 +500,7 @@ INSERT INTO expense ("Date", "Amount", "Description", "Category") VALUES
 ('2025-03-01', 900000, 'Chung Cư Fee', 'Home'),
 ('2025-12-18', 247000, 'Netflix', 'Entertainment');
 -- Sample big expenses
-INSERT INTO big_expense ("Date", "Amount", "Description", "Category") VALUES
-('2025-03-15', 50000000, 'Sửa nhà - thay mái tôn', 'Home Renovation'),
-('2025-06-20', 12000000, 'Mua máy giặt mới', 'Appliance'),
-('2025-09-10', 8000000, 'Sửa điều hòa', 'Home Renovation');
+INSERT INTO big_expense ("Date", "Amount", "Description") VALUES
+('2025-03-15', 50000000, 'Sửa nhà - thay mái tôn'),
+('2025-06-20', 12000000, 'Mua máy giặt mới'),
+('2025-09-10', 8000000, 'Sửa điều hòa');

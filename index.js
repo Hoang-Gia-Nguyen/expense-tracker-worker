@@ -7,6 +7,7 @@ import { expensesRouter } from './src/routes/expenses';
 import { summaryRouter } from './src/routes/summary';
 import { insightsRouter } from './src/routes/insights';
 import { configRouter } from './src/routes/api/config'; // Import config router
+import { bigExpensesRouter } from './src/routes/bigExpenses'; // Import big expenses router
 
 const router = Router();
 
@@ -15,65 +16,49 @@ router.all('*', corsMiddleware);
 
 // Root redirect
 router.get('/', (request) => {
-    return Response.redirect(`${new URL(request.url).origin}/expense`, 302);
+  return Response.redirect(`${new URL(request.url).origin}/expense`, 302);
 });
 
-// Rewrite top-level routes to index.html and serve
-const staticRoutes = ['/expense', '/summary', '/insights'];
+// Rewrite top-level routes index.html and serve
+const staticRoutes = ['/expense', '/summary', '/insights', '/big-expenses'];
 staticRoutes.forEach(path => {
-    router.all(path, async (request, env, context) => {
-        const url = new URL(request.url);
-        url.pathname = `${path}/index.html`;
-        const newRequest = new Request(url.toString(), {
-            method: request.method,
-            headers: request.headers,
-            body: request.body,
-            redirect: request.redirect,
-        });
-        try {
-            const { getAssetFromKV } = await import('@cloudflare/kv-asset-handler');
-            return await getAssetFromKV({
-                request: newRequest,
-                waitUntil: context.waitUntil.bind(context),
-            }, {
-                ASSET_NAMESPACE: env.__STATIC_CONTENT,
-                ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
-            });
-        } catch (e) {
-            return errorHandlerMiddleware(e, request, env, context);
-        }
+  router.all(path, async (request, env, context) => {
+    const url = new URL(request.url);
+    url.pathname = `${path}/index.html`;
+    const newRequest = new Request(url.toString(), {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      redirect: request.redirect,
     });
+    try {
+      const { getAssetFromKV } = await import('@cloudflare/kv-asset-handler');
+      return await getAssetFromKV({
+        request: newRequest,
+        waitUntil: context.waitUntil.bind(context),
+      }, {
+        ASSET_NAMESPACE: env.__STATIC_CONTENT,
+        ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
+      });
+    } catch (e) {
+      return errorHandlerMiddleware(e, request, env, context);
+    }
+  });
 });
 
 // Mount API routers
 router.all('/api/expense', expensesRouter.handle);
 router.all('/api/summary*', summaryRouter.handle);
 router.all('/api/insights', insightsRouter.handle);
-router.all('/api/config', configRouter.handle); // Mount the config router
-router.all('/api/expenses/category', expensesRouter.handle); // Mount the batch category update handler
+router.all('/api/config', configRouter.handle); // Mount config router
+router.all('/api/expenses/category', expensesRouter.handle);
+router.all('/api/big-expenses*', bigExpensesRouter.handle); // Mount big expenses router
 
-// Catch-all for assets and 404s
-router.all('*', async (request, env, context) => {
-    // If it's a rewritten request (Request object returned by previous handlers),
-    // itty-router will continue. itty-router 4.x supports returning a Request.
-    
-    // Actually, itty-router doesn't automatically re-route if a Request is returned.
-    // We need a way to serve assets.
-    try {
-        const { getAssetFromKV } = await import('@cloudflare/kv-asset-handler');
-        return await getAssetFromKV({
-            request,
-            waitUntil: context.waitUntil.bind(context),
-        }, {
-            ASSET_NAMESPACE: env.__STATIC_CONTENT,
-            ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
-        });
-    } catch (e) {
-        // Fallback to 404
-        return errorHandlerMiddleware(new Error('Not Found'), request, env, context);
-    }
+// Fallback to 404
+router.all('*', (request, env, context) => {
+  return errorHandlerMiddleware(new Error('Not Found'), request, env, context);
 });
 
 export default {
-    fetch: router.handle,
+  fetch: router.handle,
 };

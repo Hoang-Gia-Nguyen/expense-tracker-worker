@@ -600,6 +600,156 @@ describe('PATCH /api/expenses/category', () => {
 
 
 
+
+describe('GET /api/big-expenses', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockAll.mockResolvedValue({ results: [] });
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
+    });
+
+    it('should return big expenses for a valid year', async () => {
+        const mockItems = [
+            { rowid: 1, date: '2025-03-15', amount: 50000000, description: 'Sửa nhà', category: 'Home Renovation' },
+            { rowid: 2, date: '2025-06-20', amount: 12000000, description: 'Máy giặt', category: 'Appliance' },
+        ];
+        mockAll.mockResolvedValueOnce({ results: mockItems });
+
+        const request = createMockRequest('http://localhost/api/big-expenses?year=2025', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.items).toEqual(mockItems);
+        expect(body.total).toBe(62000000);
+        expect(mockPrepare).toHaveBeenCalledWith(
+            expect.stringContaining("FROM big_expense WHERE strftime('%Y', Date) = ?")
+        );
+        expect(mockBind).toHaveBeenCalledWith('2025');
+    });
+
+    it('should return empty list and total 0 if no big expenses found', async () => {
+        const request = createMockRequest('http://localhost/api/big-expenses?year=2024', 'GET', { 'Origin': 'http://localhost:8787' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.items).toEqual([]);
+        expect(body.total).toBe(0);
+    });
+
+    it('should return 400 if year missing', async () => {
+        const request = createMockRequest('http://localhost/api/big-expenses', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(400);
+        await expect(response.text()).resolves.toBe('Missing required query parameter: year');
+    });
+
+    it('should return 500 if D1 database operation fails', async () => {
+        mockAll.mockRejectedValueOnce(new Error('Database error'));
+        const request = createMockRequest('http://localhost/api/big-expenses?year=2025', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(500);
+    });
+});
+
+describe('POST /api/big-expenses', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
+    });
+
+    it('should add a new big expense', async () => {
+        const newExpense = { date: '2025-03-15', amount: 50000000, description: 'Sửa nhà', category: 'Home Renovation' };
+        const request = createMockRequest('http://localhost/api/big-expenses', 'POST', { 'Content-Type': 'application/json' }, newExpense);
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(201);
+        await expect(response.text()).resolves.toBe('Big expense added successfully');
+        expect(mockPrepare).toHaveBeenCalledWith('INSERT INTO big_expense (Date, Amount, Description, Category) VALUES (?, ?, ?, ?)');
+        expect(mockBind).toHaveBeenCalledWith('2025-03-15', 50000000, 'Sửa nhà', 'Home Renovation');
+    });
+
+    it('should return 400 if required fields missing', async () => {
+        const request = createMockRequest('http://localhost/api/big-expenses', 'POST', { 'Content-Type': 'application/json' }, {});
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(400);
+        await expect(response.text()).resolves.toContain('Validation Error');
+    });
+});
+
+describe('PUT /api/big-expenses', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
+    });
+
+    it('should update a big expense', async () => {
+        const updateData = { id: 1, date: '2025-03-16', amount: 55000000, description: 'Sửa nhà - thêm cửa', category: 'Home Renovation' };
+        const request = createMockRequest('http://localhost/api/big-expenses', 'PUT', { 'Content-Type': 'application/json' }, updateData);
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        await expect(response.text()).resolves.toBe('Big expense updated successfully');
+        expect(mockPrepare).toHaveBeenCalledWith(
+            'UPDATE big_expense SET Date = ?, Amount = ?, Description = ?, Category = ? WHERE rowid = ?'
+        );
+    });
+
+    it('should return 404 if expense not found', async () => {
+        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 0 } });
+        const updateData = { id: 999, date: '2025-03-16', amount: 55000000, description: 'Test', category: 'Test' };
+        const request = createMockRequest('http://localhost/api/big-expenses', 'PUT', { 'Content-Type': 'application/json' }, updateData);
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(404);
+    });
+});
+
+describe('DELETE /api/big-expenses', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAll.mockReset();
+        mockRun.mockReset();
+        mockBind.mockReset();
+        mockPrepare.mockReset();
+        mockRun.mockResolvedValue({ success: true, meta: { changes: 1 } });
+    });
+
+    it('should delete a big expense', async () => {
+        const request = createMockRequest('http://localhost/api/big-expenses', 'DELETE', { 'Content-Type': 'application/json' }, { id: 1 });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(200);
+        await expect(response.text()).resolves.toBe('Big expense deleted successfully');
+        expect(mockPrepare).toHaveBeenCalledWith('DELETE FROM big_expense WHERE rowid = ?');
+    });
+
+    it('should return 404 if expense not found', async () => {
+        mockRun.mockResolvedValueOnce({ success: true, meta: { changes: 0 } });
+        const request = createMockRequest('http://localhost/api/big-expenses', 'DELETE', { 'Content-Type': 'application/json' }, { id: 999 });
+        const response = await worker.fetch(request, mockEnv);
+
+        expect(response.status).toBe(404);
+    });
+});
+
+
 describe('Catch-all 404', () => {
     it('should return 404 for unmatched routes', async () => {
         const request = createMockRequest('http://localhost/non-existent-route', 'GET', { 'Origin': 'https://expensetracker.hgnlab.org' });

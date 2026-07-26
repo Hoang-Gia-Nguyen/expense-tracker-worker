@@ -16,7 +16,7 @@ describe('static asset handling', () => {
     const mockResponse = new Response('asset', { status: 200 });
     getAssetFromKV.mockResolvedValueOnce(mockResponse);
 
-    const request = new Request('http://localhost/expense/index.html', { method: 'GET' });
+    const request = new Request('http://localhost/expense', { method: 'GET' });
     const env = {
       __STATIC_CONTENT: {},
       __STATIC_CONTENT_MANIFEST: {},
@@ -29,7 +29,7 @@ describe('static asset handling', () => {
     expect(response.status).toBe(200);
     expect(getAssetFromKV).toHaveBeenCalledTimes(1);
     const call = getAssetFromKV.mock.calls[0];
-    expect(call[0].request.url).toBe(request.url);
+    expect(call[0].request.url).toBe('http://localhost/expense/index.html');
   });
 
   it('ignores /api/expense routes when serving assets', async () => {

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+  (function() {
+    try {
+      var s = JSON.parse(localStorage.getItem('expense_tracker_settings'));
+      if (s && s.theme) {
+        document.documentElement.setAttribute('data-bs-theme', s.theme);
+        var toggleBtn = document.getElementById('theme-toggle-btn');
+        if (toggleBtn) {
+          var icon = toggleBtn.querySelector('i');
+          if (icon) {
+            icon.className = s.theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+          }
+          toggleBtn.title = s.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        }
+      }
+    } catch(e) {}
+  })();
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Expenses - Expense Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/theme.css">
+    <link rel="icon" type="image/png" href="/favico.png">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Expense Tracker</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/expense">Expense</a>
+                <a class="nav-link" href="/summary">Summary</a>
+                <a class="nav-link" href="/insights">Insights</a>
+                <a class="nav-link active" aria-current="page" href="/big-expenses">Big Expenses</a>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <button class="btn btn-outline-secondary btn-sm" id="theme-toggle-btn" title="Switch to dark theme">
+                    <i class="bi bi-sun-fill"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" id="settings-btn" title="Settings">
+                    <i class="bi bi-gear-fill"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">Big Expenses</h1>
+        <p class="text-muted text-center mb-4">Record large yearly expenses (home renovation, etc.). These are not counted in monthly statistics.</p>
+
+        <!-- Year Picker -->
+        <div class="row mb-4">
+            <div class="col-md-4 col-lg-3 mx-auto">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                    <input type="number" class="form-control" id="year-picker" min="2000" max="2099" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- Yearly Total -->
+        <div id="yearly-total" class="text-center mb-4 h3"></div>
+
+        <!-- Loading / Error -->
+        <div id="loading-spinner" class="text-center mb-4 d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+
+        <!-- Add Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Add New Big Expense</h5>
+                <form id="big-expense-form">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">Amount (in ₫)</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="amount" placeholder="Enter amount" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" placeholder="Enter description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" required>
+                            <option value="" disabled selected>Select a category</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Add Big Expense</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expenses List -->
+        <h2>Records</h2>
+        <div id="empty-state" class="text-center text-muted my-5 d-none">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No big expenses recorded for this year.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="big-expense-list">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/settings.js"></script>
+    <script type="module">
+        import { initSettings, openSettingsModal, toggleTheme, populateCategorySelect, getCategories } from '/settings.js';
+
+        initSettings();
+        document.getElementById('settings-btn')?.addEventListener('click', openSettingsModal);
+        document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
+        // DOM refs
+        const yearPicker = document.getElementById('year-picker');
+        const form = document.getElementById('big-expense-form');
+        const dateInput = document.getElementById('date');
+        const amountInput = document.getElementById('amount');
+        const descInput = document.getElementById('description');
+        const categorySelect = document.getElementById('category');
+        const listEl = document.getElementById('big-expense-list');
+        const emptyState = document.getElementById('empty-state');
+        const yearlyTotalEl = document.getElementById('yearly-total');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const errorMessage = document.getElementById('error-message');
+
+        // Set default year
+        const currentYear = new Date().getFullYear();
+        yearPicker.value = currentYear;
+        dateInput.value = new Date().toISOString().split('T')[0];
+
+        // Populate categories
+        populateCategorySelect(categorySelect, { placeholder: 'Select a category' });
+
+        // Helpers
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.remove('d-none');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('d-none');
+        }
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        async function fetchBigExpenses(year) {
+            loadingSpinner.classList.remove('d-none');
+            hideError();
+            try {
+                const res = await fetch(`/api/big-expenses?year=${year}`);
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Failed to fetch');
+                }
+                return await res.json();
+            } catch (err) {
+                showError(err.message);
+                return { items: [], total: 0 };
+            } finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        }
+
+        function render(data) {
+            listEl.innerHTML = '';
+            if (data.items.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+            }
+
+            const categories = getCategories();
+
+            data.items.forEach(item => {
+                const catColor = window._categoryColors?.[item.category] || '#6c757d';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.date}</td>
+                    <td class="text-end">${formatCurrency(item.amount)}</td>
+                    <td>${item.description}</td>
+                    <td><span class="badge" style="background-color:${catColor}">${item.category}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.rowid}" data-amount="${item.amount}" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                listEl.appendChild(tr);
+            });
+
+            // Delete handlers
+            listEl.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = parseInt(btn.dataset.id);
+                    if (!confirm('Delete this big expense?')) return;
+                    try {
+                        const res = await fetch('/api/big-expenses', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id }),
+                        });
+                        if (!res.ok) {
+                            const text = await res.text();
+                            throw new Error(text || 'Delete failed');
+                        }
+                        await loadAndRender();
+                    } catch (err) {
+                        showError(err.message);
+                    }
+                });
+            });
+        }
+
+        async function loadAndRender() {
+            const year = yearPicker.value;
+            if (!year) return;
+            const data = await fetchBigExpenses(year);
+            render(data);
+            yearlyTotalEl.innerHTML = `Total: <strong>${formatCurrency(data.total)}</strong>`;
+        }
+
+        // Form submit
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const rawAmount = amountInput.value.replace(/[.٫,\s]/g, '');
+            const amount = parseInt(rawAmount, 10);
+            if (isNaN(amount) || amount <= 0) {
+                showError('Please enter a valid positive amount.');
+                return;
+            }
+
+            const payload = {
+                date: dateInput.value,
+                amount,
+                description: descInput.value.trim(),
+                category: categorySelect.value,
+            };
+
+            try {
+                const res = await fetch('/api/big-expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Failed to add');
+                }
+                form.reset();
+                dateInput.value = new Date().toISOString().split('T')[0];
+                await loadAndRender();
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        // Year change
+        yearPicker.addEventListener('change', loadAndRender);
+
+        // Initial load
+        loadAndRender();
+
+        // Expose category colors for badge rendering
+        import('/settings.js').then(mod => {
+            window._categoryColors = mod.getCategoryColors();
+        });
+    </script>
+</body>
+</html>

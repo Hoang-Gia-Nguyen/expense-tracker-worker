@@ -194,6 +194,85 @@ paths:
         '500':
           description: Internal server error.
 
+  /api/big-expenses:
+    get:
+      summary: Get big expenses for a year
+      description: List all big expenses for the given year with yearly total.
+      parameters:
+        - name: year
+          in: query
+          required: true
+          description: Year to filter by (e.g., 2025).
+          schema:
+            type: string
+            pattern: "^\\d{4}$"
+      responses:
+        '200':
+          description: List of big expenses with total.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Expense'
+                  total:
+                    type: integer
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+    post:
+      summary: Add a new big expense
+      description: Creates a new big expense record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewExpense'
+      responses:
+        '201':
+          description: Big expense added successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+    put:
+      summary: Update an existing big expense
+      description: Updates an existing big expense record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpense'
+      responses:
+        '200':
+          description: Big expense updated successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Delete a big expense
+      description: Removes a big expense record using its row ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteExpense'
+      responses:
+        '200':
+          description: Big expense deleted successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+
 components:
   schemas:
     Expense:

@@ -54,7 +54,7 @@ describe('index.html structure', () => {
 
   it('renders navigation links, theme toggle, and settings button', () => {
     const navLinks = Array.from(document.querySelectorAll('nav .nav-link')).map(a => a.getAttribute('href'));
-    expect(navLinks).toEqual(['/expense', '/summary', '/insights']);
+    expect(navLinks).toEqual(['/expense', '/summary', '/insights', '/big-expenses']);
     const themeToggle = document.getElementById('theme-toggle-btn');
     expect(themeToggle).toBeTruthy();
     expect(themeToggle.querySelector('i').classList.contains('bi-sun-fill')).toBe(true);

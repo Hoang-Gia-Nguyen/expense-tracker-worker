@@ -89,7 +89,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required query parameters: year, month');
+        await expect(response.text()).resolves.toBe('Missing or invalid query parameters: year, month');
     });
 
     it('should return 400 if month is missing', async () => {
@@ -97,7 +97,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(400);
-        await expect(response.text()).resolves.toBe('Missing required query parameters: year, month');
+        await expect(response.text()).resolves.toBe('Missing or invalid query parameters: year, month');
     });
 
     it('should return 500 if D1 database operation fails', async () => {
@@ -108,7 +108,7 @@ describe('GET /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        await expect(response.text()).resolves.toBe('An unexpected error occurred');
     });
 
     it('should return 200 with Access-Control-Allow-Origin: null for disallowed origin', async () => {
@@ -130,7 +130,7 @@ describe('GET /api/expense', () => {
 
             expect(response.status).toBe(204);
             expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://expensetracker.hgnlab.org');
-            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, DELETE, OPTIONS');
+            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
             expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type');
         });
 
@@ -416,7 +416,7 @@ describe('POST /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        await expect(response.text()).resolves.toBe('An unexpected error occurred');
     });
 });
 
@@ -491,7 +491,7 @@ describe('PUT /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        await expect(response.text()).resolves.toBe('An unexpected error occurred');
     });
 });
 
@@ -546,7 +546,7 @@ describe('DELETE /api/expense', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(500);
-        await expect(response.text()).resolves.toBe(`An error occurred: ${errorMessage}`);
+        await expect(response.text()).resolves.toBe('An unexpected error occurred');
     });
 });
 
@@ -744,6 +744,6 @@ describe('Catch-all 404', () => {
         const response = await worker.fetch(request, mockEnv);
 
         expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('404, not found!');
+        await expect(response.text()).resolves.toBe('Not Found');
     });
 });

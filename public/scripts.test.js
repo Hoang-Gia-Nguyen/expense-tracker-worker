@@ -91,7 +91,7 @@ async function bootApp({
 
   // Attach DOM to globals
   global.window = window;
-  global.document = document;
+  Object.defineProperty(globalThis, 'document', { configurable: true, writable: true, value: document });
 
   // Pre-populate category selects to match what settings.js would provide on page load
   const testCategories = ['Food', 'Medical/Utility', 'Home', 'Transportation', 'Entertainment', 'Gift', 'Baby', 'Other'];
@@ -128,7 +128,11 @@ async function bootApp({
     };
   })();
   Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
-  global.localStorage = window.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    writable: true,
+    value: window.localStorage,
+  });
 
   // Mocks
   global.alert = vi.fn();
@@ -136,17 +140,17 @@ async function bootApp({
 
   const showSpy = vi.fn();
   const hideSpy = vi.fn();
-  const createModal = () => ({ show: showSpy, hide: hideSpy });
+  function createModal() { return { show: showSpy, hide: hideSpy }; }
 
   global.bootstrap = {
     Modal: vi.fn(createModal),
-    Tooltip: vi.fn(() => ({})),
+    Tooltip: vi.fn(function createTooltip() { return {}; }),
     getOrCreateInstance: vi.fn(() => ({ show: showSpy, hide: hideSpy })),
   };
   window.bootstrap = global.bootstrap;
 
   // Chart mock that provides destroy()
-  const chartFactory = vi.fn(() => {
+  const chartFactory = vi.fn(function createChart() {
     const instance = { destroy: vi.fn() };
     return instance;
   });
@@ -683,8 +687,10 @@ describe('scripts.js (Vitest + jsdom, high coverage)', () => {
   });
 
   it('handles GET network failure: shows connection error and clears summaries', async () => {
+    const networkFailure = Promise.reject(new Error('network down'));
+    networkFailure.catch(() => {});
     const { document, cleanup } = await bootApp({
-      initialGet: Promise.reject(new Error('network down')),
+      initialGet: networkFailure,
     });
 
     const listText = textContent(document.getElementById('expense-list'));

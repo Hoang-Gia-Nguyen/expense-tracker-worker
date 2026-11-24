@@ -131,7 +131,7 @@ describe('summary.js', () => {
   it('renders all summary sections with correct data', async () => {
     const dom = new JSDOM(buildHTML(), { url: 'http://localhost/' });
     global.window = dom.window;
-    global.document = dom.window.document;
+    Object.defineProperty(globalThis, 'document', { configurable: true, writable: true, value: dom.window.document });
 
     const fetchMock = createMockFetch();
     global.fetch = fetchMock;
@@ -201,13 +201,13 @@ describe('summary.js', () => {
   it('re-fetches when month picker changes', async () => {
     const dom = new JSDOM(buildHTML(), { url: 'http://localhost/' });
     global.window = dom.window;
-    global.document = dom.window.document;
+    Object.defineProperty(globalThis, 'document', { configurable: true, writable: true, value: dom.window.document });
 
     const fetchMock = createMockFetch();
     global.fetch = fetchMock;
 
     const chartMock = { destroy: vi.fn() };
-    global.Chart = vi.fn(() => chartMock);
+    global.Chart = vi.fn(function createChart() { return chartMock; });
 
     const domElements = {
       monthPicker: document.getElementById('month-picker'),

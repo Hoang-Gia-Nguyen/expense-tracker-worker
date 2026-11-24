@@ -93,7 +93,7 @@ describe('API Integration Tests (real D1)', () => {
     const res = await mf.dispatchFetch('http://localhost/api/expense?year=2025');
     expect(res.status).toBe(400);
     const text = await res.text();
-    expect(text).toContain('Missing required');
+    expect(text).toContain('Missing or invalid query parameters');
   });
 
   it('GET /api/summary returns category spend for a month', async () => {
@@ -276,11 +276,11 @@ describe('API Integration Tests (real D1)', () => {
     });
     expect(res.status).toBe(204);
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:8787');
-    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, DELETE, OPTIONS');
+    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
   });
 
-  it('non-API routes return 404', async () => {
-    const res = await mf.dispatchFetch('http://localhost/nonexistent');
+  it('unknown API routes return 404', async () => {
+    const res = await mf.dispatchFetch('http://localhost/api/nonexistent');
     expect(res.status).toBe(404);
   });
 

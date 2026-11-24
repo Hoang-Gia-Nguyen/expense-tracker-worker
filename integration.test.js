@@ -39,8 +39,8 @@ describe('API Integration Tests (real D1)', () => {
       scriptPath: BUNDLE_PATH,
       compatibilityFlags: ['nodejs_compat'],
       compatibilityDate: '2025-07-27',
+      bindings: { APP_ENV: 'development', ALLOW_UNAUTHENTICATED_LOCAL: 'true' },
       d1Databases: { D1_DATABASE: 'test-db' },
-      kvNamespaces: { __STATIC_CONTENT: 'test-kv' },
     });
 
     // Apply schema using prepare().run() since exec has issues with multi-line DDL

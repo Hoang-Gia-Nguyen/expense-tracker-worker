@@ -2,6 +2,7 @@ import { Router } from 'itty-router';
 import { errorHandlerMiddleware } from '../middleware/errorHandler';
 import { getCorsHeaders } from '../middleware/cors';
 import { AppError } from '../utils/AppError';
+import { parseJsonBody } from '../utils/parseJsonBody';
 import {
     NewExpenseInputSchema,
     UpdateExpenseInputSchema,
@@ -12,22 +13,6 @@ import {
 
 const expensesRouter = Router();
 
-// Helper to parse and validate JSON body
-const parseJsonBody = async (request, schema) => {
-    try {
-        const body = await request.json();
-        return schema.parse(body);
-    } catch (error) {
-        if (error instanceof SyntaxError) {
-            throw new AppError('Invalid JSON format', 400);
-        }
-        if (error.issues) { // Zod validation error
-            throw new AppError(`Validation Error: ${error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ')}`, 400);
-        }
-        throw error;
-    }
-};
-
 // Handle GET requests for expenses
 expensesRouter.get('/api/expense', async (request, env, context) => {
     const headers = getCorsHeaders(request);
@@ -36,8 +21,11 @@ expensesRouter.get('/api/expense', async (request, env, context) => {
         const year = url.searchParams.get('year');
         const month = url.searchParams.get('month');
 
-        if (!year || !month) {
-            throw new AppError('Missing required query parameters: year, month', 400);
+        if (!year || !month || !/^\d{4}$/.test(year) || !/^(0[1-9]|1[0-2])$/.test(month)) {
+            return new Response('Missing or invalid query parameters: year, month', {
+                status: 400,
+                headers: { ...headers, 'Content-Type': 'text/plain; charset=utf-8' },
+            });
         }
 
         const db = env.D1_DATABASE;

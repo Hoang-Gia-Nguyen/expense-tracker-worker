@@ -20,10 +20,10 @@ const mockD1Database = {
 
 
 const mockEnv = {
+    APP_ENV: 'development',
+    ALLOW_UNAUTHENTICATED_LOCAL: 'true',
     D1_DATABASE: mockD1Database,
-    __STATIC_CONTENT: {}, // Mock for KV asset handler
-    __STATIC_CONTENT_MANIFEST: {}, // Mock for KV asset handler
-    waitUntil: vi.fn(), // Mock waitUntil for getAssetFromKV
+    ASSETS: { fetch: vi.fn(async () => new Response('Not Found', { status: 404 })) },
     ANALYTICS_TEST: {
         writeDataPoint: vi.fn(),
     },
@@ -341,23 +341,11 @@ describe('GET /api/summary/ytd', () => {
 // Test for static asset serving (basic check)
 describe('Static Asset Serving', () => {
     it('should return 404 for non-existent asset after fall-through', async () => {
-        // Mock getAssetFromKV to throw an error for a non-existent asset
-        vi.mock('@cloudflare/kv-asset-handler', async (importOriginal) => {
-            const actual = await importOriginal();
-            return {
-                ...actual,
-                getAssetFromKV: vi.fn(() => {
-                    throw new Error('Asset not found'); // Simulate asset not found
-                }),
-            };
-        });
-
         const request = createMockRequest('http://localhost/non-existent-asset.html');
         const response = await worker.fetch(request, mockEnv);
 
-        // Corrected expectation: The request falls through to the 404 handler
         expect(response.status).toBe(404);
-        await expect(response.text()).resolves.toBe('404, not found!');
+        await expect(response.text()).resolves.toBe('Not Found');
     });
 });
 

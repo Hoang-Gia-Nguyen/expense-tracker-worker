@@ -125,6 +125,7 @@
     <script type="module" src="/settings.js"></script>
     <script type="module">
         import { initSettings, openSettingsModal, toggleTheme } from '/settings.js';
+        import { escapeHtml } from '/escapeHtml.js';
 
         initSettings();
         document.getElementById('settings-btn')?.addEventListener('click', openSettingsModal);
@@ -190,9 +191,9 @@
             data.items.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${item.date}</td>
+                    <td>${escapeHtml(item.date)}</td>
                     <td class="text-end">${formatCurrency(item.amount)}</td>
-                    <td>${item.description}</td>
+                    <td>${escapeHtml(item.description)}</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.rowid}" title="Delete">
                             <i class="bi bi-trash"></i>

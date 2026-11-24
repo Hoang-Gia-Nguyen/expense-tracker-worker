@@ -2,15 +2,17 @@ import { Router } from 'itty-router';
 import { errorHandlerMiddleware } from '../middleware/errorHandler';
 import { getCorsHeaders } from '../middleware/cors';
 import { AppError } from '../utils/AppError';
+import { parseJsonBody } from '../utils/parseJsonBody';
+import { isValidCalendarDate } from '../utils/dateValidation';
 import { z } from 'zod';
 
 const bigExpensesRouter = Router();
 
 // Big expense schemas (no category needed)
 const BigExpenseInputSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date must be YYYY-MM-DD" }),
-  amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }),
-  description: z.string().min(1, { message: "Description cannot be empty" }),
+  date: z.string().refine(isValidCalendarDate, { message: "Date must be a real YYYY-MM-DD date" }),
+  amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }).safe(),
+  description: z.string().min(1, { message: "Description cannot be empty" }).max(500),
 });
 
 const BigExpenseUpdateSchema = BigExpenseInputSchema.extend({
@@ -21,22 +23,6 @@ const BigExpenseDeleteSchema = z.object({
   id: z.number().int({ message: "ID must be an integer" }),
 });
 
-// Helper to parse and validate JSON body
-const parseJsonBody = async (request, schema) => {
-  try {
-    const body = await request.json();
-    return schema.parse(body);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new AppError('Invalid JSON format', 400);
-    }
-    if (error.issues) {
-      throw new AppError(`Validation Error: ${error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ')}`, 400);
-    }
-    throw error;
-  }
-};
-
 // GET /api/big-expenses?year=2025
 bigExpensesRouter.get('/api/big-expenses', async (request, env, context) => {
   const headers = getCorsHeaders(request);
@@ -44,7 +30,7 @@ bigExpensesRouter.get('/api/big-expenses', async (request, env, context) => {
     const url = new URL(request.url);
     const year = url.searchParams.get('year');
 
-    if (!year) {
+    if (!year || !/^\d{4}$/.test(year)) {
       throw new AppError('Missing required query parameter: year', 400);
     }
 

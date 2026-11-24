@@ -4,6 +4,7 @@ import {
   populateCategorySelect, initSettings, openSettingsModal, toggleTheme,
 } from './settings.js';
 import { applyThemeToChart } from './chartTheme.js';
+import { escapeHtml, safeColor } from './escapeHtml.js';
 
 const apiUrl = '/api/expense';
 let monthlyBudgetFn = () => getBudgets();
@@ -285,7 +286,7 @@ export function createExpenseTrackerApp(domElements) {
                     <div class="col-md-4 col-sm-6 mb-3">
                         <div class="card">
                             <div class="card-body">
-                                <h6 class="card-title text-center">${category}</h6>
+                                <h6 class="card-title text-center">${escapeHtml(category)}</h6>
                                 <p class="card-text fs-5 text-center">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                                 <p class="card-text small text-center text-muted">Budget: ${new Intl.NumberFormat('vi-VN').format(budget)} ₫</p>
                                 <div class="progress" style="height: 20px;">
@@ -308,7 +309,7 @@ export function createExpenseTrackerApp(domElements) {
                     <div class="col-md-4 col-sm-6 mb-3">
                         <div class="card">
                             <div class="card-body">
-                                <h6 class="card-title text-center">${category}</h6>
+                                <h6 class="card-title text-center">${escapeHtml(category)}</h6>
                                 <p class="card-text fs-5 text-center">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                                 <p class="card-text small text-center text-muted">Budget: ${new Intl.NumberFormat('vi-VN').format(budget)} ₫</p>
                                 <div class="progress" style="height: 20px;">
@@ -333,7 +334,7 @@ export function createExpenseTrackerApp(domElements) {
                         <div class="col-md-4 col-sm-6 mb-3">
                             <div class="card">
                                 <div class="card-body text-center">
-                                    <h6 class="card-title">${category}</h6>
+                                    <h6 class="card-title">${escapeHtml(category)}</h6>
                                     <p class="card-text fs-5">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                                 </div>
                             </div>
@@ -375,17 +376,21 @@ export function createExpenseTrackerApp(domElements) {
             separatorRow.className = "date-separator";
             separatorRow.style.position = "sticky";
             separatorRow.style.top = "0";
-            separatorRow.innerHTML = `<td colspan="4">${date}</td>`;
+            separatorRow.textContent = date;
+            const separatorCell = document.createElement('td');
+            separatorCell.colSpan = 4;
+            separatorCell.textContent = date;
+            separatorRow.replaceChildren(separatorCell);
             expenseList.appendChild(separatorRow);
 
             groupedExpenses[date].forEach((expense) => {
-                const color = categoryColors[expense.category] || "#808080";
+                const color = safeColor(categoryColors[expense.category] || "#808080");
                 const row = document.createElement("tr");
                 row.className = "expense-row";
                 row.innerHTML = `
                     <td class="text-end fw-bold amount-cell" style="font-size:1.1em;font-variant-numeric:tabular-nums">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</td>
-                    <td>${expense.description}</td>
-                    <td><span class="category-dot" style="background-color:${color}"></span>${expense.category}</td>
+                    <td>${escapeHtml(expense.description)}</td>
+                    <td><span class="category-dot" style="background-color:${color}"></span>${escapeHtml(expense.category)}</td>
                     <td class="actions-cell">
                         <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-outline-danger btn-sm" data-id="${expense.rowid}" title="Delete expense" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
@@ -401,13 +406,13 @@ export function createExpenseTrackerApp(domElements) {
                         <div class="card-row-1">
                             <div class="card-category">
                                 <span class="category-dot" style="background-color:${color}"></span>
-                                <span class="card-category-name">${expense.category}</span>
+                                <span class="card-category-name">${escapeHtml(expense.category)}</span>
                             </div>
                             <div class="card-amount fw-bold">${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expense.amount)}</div>
                         </div>
                         <div class="card-row-2">
-                            <div class="card-description text-muted">${expense.description}</div>
-                            <div class="card-date small">${expense.date}</div>
+                            <div class="card-description text-muted">${escapeHtml(expense.description)}</div>
+                            <div class="card-date small">${escapeHtml(expense.date)}</div>
                         </div>
                         <div class="card-row-3 text-end">
                             <button class="btn btn-outline-secondary btn-sm me-1" data-id="${expense.rowid}" title="Edit expense" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>

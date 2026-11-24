@@ -3,6 +3,7 @@
  */
 
 import { applyThemeToChart } from './chartTheme.js';
+import { escapeHtml } from './escapeHtml.js';
 
 // Format currency in VND
 function formatCurrency(amount) {
@@ -132,7 +133,7 @@ function renderCategorySpikes(container, categorySpikes) {
   const html = categorySpikes.map(spike => `
     <div class="alert alert-danger d-flex justify-content-between align-items-center mb-2">
       <div>
-        <strong><i class="bi bi-tag-fill"></i> ${spike.category}</strong>
+        <strong><i class="bi bi-tag-fill"></i> ${escapeHtml(spike.category)}</strong>
         <span class="ms-2">${formatCurrency(spike.current)}</span>
       </div>
       <span class="badge bg-danger">+${spike.percentIncrease.toFixed(0)}%</span>
@@ -152,8 +153,8 @@ function renderTopTransactions(tbody, topTransactions) {
   const html = topTransactions.map((tx, index) => `
     <tr>
       <td>${formatDate(tx.date)}</td>
-      <td>${tx.description}</td>
-      <td><span class="badge bg-secondary">${tx.category}</span></td>
+      <td>${escapeHtml(tx.description)}</td>
+      <td><span class="badge bg-secondary">${escapeHtml(tx.category)}</span></td>
       <td class="text-end">
         <strong>${formatCurrency(tx.amount)}</strong>
         ${index === 0 ? '<i class="bi bi-trophy-fill text-warning ms-2"></i>' : ''}

@@ -20,7 +20,7 @@ Expense Tracker Worker is a serverless application that records personal spendin
 ```
 
 ## Prerequisites
-- [Node.js](https://nodejs.org/) 18+
+- [Node.js](https://nodejs.org/) 22.22.2, 24.15.0, or 26+
 - A Cloudflare account with D1 enabled
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
 
@@ -33,20 +33,22 @@ Expense Tracker Worker is a serverless application that records personal spendin
    ```
 2. **Create D1 databases**
    ```bash
-   npx wrangler d1 create cf-mony-worker-dev
-   npx wrangler d1 create cf-mony-worker-prod
+   npx wrangler d1 create mony-development-db
+   npx wrangler d1 create mony-staging-db
+   npx wrangler d1 create mony
    ```
-   Update `wrangler.jsonc` with the returned `database_id` values.
+   Put the development database ID in the `development` binding in `wrangler.jsonc`. Save the staging and production IDs as GitHub Actions secrets named `STAGING_D1_DATABASE_ID` and `PRODUCTION_D1_DATABASE_ID`; the CI/CD workflow injects those IDs only in its temporary checkout before deploying.
 3. **Apply the schema**
    ```bash
-   npx wrangler d1 execute cf-mony-worker-dev --local --file=./schema.sql
-   npx wrangler d1 execute cf-mony-worker-prod --file=./schema.sql
+   npx wrangler d1 execute mony-development-db --local --file=./schema.sql
+   npx wrangler d1 execute mony-staging-db --remote --file=./schema.sql
+   npx wrangler d1 execute mony --remote --file=./schema.sql
    ```
 
 ## Local development
-Run the worker using Wrangler:
+Run the worker using Wrangler's configured development environment, which permits unauthenticated requests only from localhost:
 ```bash
-npx wrangler dev
+npx wrangler dev --env development
 ```
 The application will be available at `http://localhost:8787`.
 
@@ -59,9 +61,21 @@ npm test
 ## Deployment
 Deploy the worker to Cloudflare:
 ```bash
-npx wrangler deploy
+npx wrangler deploy --env production
 ```
-Make sure `wrangler.jsonc` is configured with your production database.
+Before deploying, create a Cloudflare Access self-hosted application for each hostname (`expensetracker.hgnlab.org` and `stagetracker.hgnlab.org`) and add the policy for the people allowed to use the tracker. The Access application's audience tag is required by the Worker to verify each request. The D1 placeholders remain in source control; GitHub Actions replaces each with the corresponding database ID secret after tests pass.
+
+Configure the Access team domain and the matching audience tag as Worker secrets for each environment:
+```bash
+npx wrangler secret put CF_ACCESS_TEAM_DOMAIN --env production
+npx wrangler secret put CF_ACCESS_AUD --env production
+npx wrangler secret put CF_ACCESS_TEAM_DOMAIN --env staging
+npx wrangler secret put CF_ACCESS_AUD --env staging
+```
+
+`CF_ACCESS_TEAM_DOMAIN` is the Access team host without `https://` (for example, `my-team.cloudflareaccess.com`). `CF_ACCESS_AUD` is the audience tag from that environment's Access application. Production and staging requests fail closed with `503` until both values are configured. Do not set `ALLOW_UNAUTHENTICATED_LOCAL` outside the development environment.
+
+The Worker uses Cloudflare's `ASSETS` binding for the front end. `wrangler.jsonc` configures the Worker to run before assets so the Access check also covers static files.
 
 ## Settings
 

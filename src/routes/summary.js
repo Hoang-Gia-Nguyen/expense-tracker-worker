@@ -46,7 +46,7 @@ function daysInMonth(yearMonth) {
 // Shared query param schema for year-month
 const yearMonthSchema = z.object({
     year: z.string().regex(/^\d{4}$/, "Year must be a 4-digit number"),
-    month: z.string().regex(/^\d{2}$/, "Month must be a 2-digit number"),
+    month: z.string().regex(/^(0[1-9]|1[0-2])$/, "Month must be between 01 and 12"),
 });
 
 // Handle GET requests for summary (original categories endpoint)

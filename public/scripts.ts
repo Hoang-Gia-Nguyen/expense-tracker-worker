@@ -1,4 +1,5 @@
 import Chart from 'chart.js/auto'; // Assuming chart.js is available globally or imported like this
+import { escapeHtml } from './escapeHtml.js';
 import {
     Expense,
     NewExpenseInput,
@@ -107,7 +108,7 @@ async function fetchExpensesForMonth(monthPickerValue: string): Promise<void> {
     } catch (error: any) {
         console.error('Error fetching expenses:', error);
         const expenseList = document.getElementById('expense-list') as HTMLTableSectionElement;
-        expenseList.innerHTML = `<tr><td colspan="5" class="text-center">${error.message || 'Could not connect to the server.'}</td></tr>`;
+            expenseList.innerHTML = `<tr><td colspan="5" class="text-center">${escapeHtml(error.message || 'Could not connect to the server.')}</td></tr>`;
         clearSummaries();
     }
 }
@@ -383,7 +384,7 @@ function renderSummaries(data: ApiExpense[]): void {
                 <div class="col-md-4 col-sm-6 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h6 class="card-title text-center">${category}</h6>
+                            <h6 class="card-title text-center">${escapeHtml(category)}</h6>
                             <p class="card-text fs-5 text-center">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                             <p class="card-text small text-center text-muted">Budget: ${new Intl.NumberFormat('vi-VN').format(budget)} ₫</p>
                             <div class="progress" style="height: 20px;">
@@ -406,7 +407,7 @@ function renderSummaries(data: ApiExpense[]): void {
                 <div class="col-md-4 col-sm-6 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h6 class="card-title text-center">${category}</h6>
+                            <h6 class="card-title text-center">${escapeHtml(category)}</h6>
                             <p class="card-text fs-5 text-center">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                             <p class="card-text small text-center text-muted">Budget: ${new Intl.NumberFormat('vi-VN').format(budget)} ₫</p>
                             <div class="progress" style="height: 20px;">
@@ -428,7 +429,7 @@ function renderSummaries(data: ApiExpense[]): void {
                     <div class="col-md-4 col-sm-6 mb-3">
                         <div class="card">
                             <div class="card-body text-center">
-                                <h6 class="card-title">${category}</h6>
+                                <h6 class="card-title">${escapeHtml(category)}</h6>
                                 <p class="card-text fs-5">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</p>
                             </div>
                         </div>
@@ -468,15 +469,18 @@ function renderExpenses(data: ApiExpense[]): void {
     for (const date in groupedExpenses) {
         const separatorRow = document.createElement('tr');
         separatorRow.classList.add('date-separator');
-        separatorRow.innerHTML = `<td colspan="5">${date}</td>`;
+        const separatorCell = document.createElement('td');
+        separatorCell.colSpan = 5;
+        separatorCell.textContent = date;
+        separatorRow.appendChild(separatorCell);
         expenseList.appendChild(separatorRow);
 
         groupedExpenses[date].forEach((expense) => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.Amount)}</td>
-                <td>${expense.Description}</td>
-                <td>${expense.Category}</td>
+                <td>${escapeHtml(expense.Description)}</td>
+                <td>${escapeHtml(expense.Category)}</td>
                 <td class="actions-cell">
                     <button class="btn btn-info btn-sm modify-btn" data-id="${expense.rowid}">Modify</button>
                     <button class="btn btn-danger btn-sm delete-btn" data-id="${expense.rowid}">Delete</button>

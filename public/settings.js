@@ -4,6 +4,7 @@
  */
 
 const STORAGE_KEY = 'expense_tracker_settings';
+import { escapeHtml, safeColor } from './escapeHtml.js';
 
 const BUILTIN_CATEGORIES = ['Uncategorized'];
 
@@ -298,29 +299,30 @@ const SETTINGS_MODAL_HTML = `
  * Render the category row in the settings modal.
  */
 function renderCategoryRow(cat, index, settings) {
-  const color = settings.categoryColors[cat] || getDefaultColor(index);
+  const safeCategory = escapeHtml(cat);
+  const color = safeColor(settings.categoryColors[cat] || getDefaultColor(index));
   const isBuiltin = BUILTIN_CATEGORIES.includes(cat);
   return `
-    <div class="d-flex align-items-center gap-2 mb-2 p-2 border rounded settings-category-row" data-category="${cat}">
-      <input type="color" class="form-control form-control-color settings-cat-color" value="${color}" data-category="${cat}" style="width: 48px; padding: 2px;" title="Category color">
-      <span class="flex-grow-1 settings-cat-name" data-category="${cat}">${cat}</span>
+    <div class="d-flex align-items-center gap-2 mb-2 p-2 border rounded settings-category-row" data-category="${safeCategory}">
+      <input type="color" class="form-control form-control-color settings-cat-color" value="${color}" data-category="${safeCategory}" style="width: 48px; padding: 2px;" title="Category color">
+      <span class="flex-grow-1 settings-cat-name" data-category="${safeCategory}">${safeCategory}</span>
       <span class="settings-cat-edit" style="display:none;">
-        <input type="text" class="form-control form-control-sm settings-cat-rename-input" data-category="${cat}" value="${cat}" style="width: 180px;">
-        <button class="btn btn-sm btn-outline-success settings-cat-rename-save" data-category="${cat}" title="Save">
+        <input type="text" class="form-control form-control-sm settings-cat-rename-input" data-category="${safeCategory}" value="${safeCategory}" style="width: 180px;">
+        <button class="btn btn-sm btn-outline-success settings-cat-rename-save" data-category="${safeCategory}" title="Save">
           <i class="bi bi-check-lg"></i>
         </button>
-        <button class="btn btn-sm btn-outline-secondary settings-cat-rename-cancel" data-category="${cat}" title="Cancel">
+        <button class="btn btn-sm btn-outline-secondary settings-cat-rename-cancel" data-category="${safeCategory}" title="Cancel">
           <i class="bi bi-x-lg"></i>
         </button>
       </span>
       <div class="form-check form-switch mb-0">
-        <input class="form-check-input settings-som-cat" type="checkbox" role="switch" id="som-${index}" data-category="${cat}" ${settings.startOfMonthCategories.includes(cat) ? 'checked' : ''}>
+        <input class="form-check-input settings-som-cat" type="checkbox" role="switch" id="som-${index}" data-category="${safeCategory}" ${settings.startOfMonthCategories.includes(cat) ? 'checked' : ''}>
         <label class="form-check-label small" for="som-${index}">Start of month</label>
       </div>
-      <button class="btn btn-outline-secondary btn-sm settings-rename-cat" data-category="${cat}" ${isBuiltin ? 'disabled' : ''} title="Rename category">
+      <button class="btn btn-outline-secondary btn-sm settings-rename-cat" data-category="${safeCategory}" ${isBuiltin ? 'disabled' : ''} title="Rename category">
         <i class="bi bi-pencil"></i>
       </button>
-      <button class="btn btn-outline-danger btn-sm settings-remove-cat" data-category="${cat}" ${isBuiltin || settings.categories.length <= 1 ? 'disabled' : ''} title="${isBuiltin ? 'Built-in category' : 'Remove category'}">
+      <button class="btn btn-outline-danger btn-sm settings-remove-cat" data-category="${safeCategory}" ${isBuiltin || settings.categories.length <= 1 ? 'disabled' : ''} title="${isBuiltin ? 'Built-in category' : 'Remove category'}">
         <i class="bi bi-trash"></i>
       </button>
     </div>
@@ -335,8 +337,8 @@ function renderBudgetRow(cat) {
   const budget = settings.budgets[cat] || 0;
   return `
     <div class="mb-2">
-      <label class="form-label small mb-1">${cat}</label>
-      <input type="number" class="form-control settings-budget-input" data-category="${cat}" value="${budget}" min="0" step="100000">
+      <label class="form-label small mb-1">${escapeHtml(cat)}</label>
+      <input type="number" class="form-control settings-budget-input" data-category="${escapeHtml(cat)}" value="${budget}" min="0" step="100000">
     </div>
   `;
 }

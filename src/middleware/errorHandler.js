@@ -23,7 +23,7 @@ export async function errorHandlerMiddleware(error, request, env, context) {
 
     let responseBody = message;
     if (status === 500) {
-        responseBody = `An error occurred: ${message}`;
+        responseBody = 'An unexpected error occurred';
     } else if (status === 404) {
         responseBody = '404, not found!';
     }

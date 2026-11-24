@@ -9,11 +9,12 @@ export function getCorsHeaders(request) {
     if (CORS_ALLOWED_ORIGINS.includes(origin)) {
         return {
             'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type',
+            'Vary': 'Origin',
         };
     }
-    return { 'Access-Control-Allow-Origin': 'null' };
+    return { 'Access-Control-Allow-Origin': 'null', 'Vary': 'Origin' };
 }
 
 /**
@@ -25,10 +26,12 @@ export function corsMiddleware(request) {
 
     if (CORS_ALLOWED_ORIGINS.includes(origin)) {
         headers['Access-Control-Allow-Origin'] = origin;
-        headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+        headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
         headers['Access-Control-Allow-Headers'] = 'Content-Type';
+        headers['Vary'] = 'Origin';
     } else {
         headers['Access-Control-Allow-Origin'] = 'null';
+        headers['Vary'] = 'Origin';
     }
 
     if (request.method === 'OPTIONS') {

@@ -1,11 +1,12 @@
 import { z } from 'zod';
+import { isValidExpenseDate } from './utils/dateValidation';
 
 // Schema for an Expense record in the database
 export const ExpenseSchema = z.object({
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, { message: "Date must be a valid date or datetime string (YYYY-MM-DD or ISO 8601)" }),
-    amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }),
-    description: z.string().min(1, { message: "Description cannot be empty" }),
-    category: z.string().min(1, { message: "Category cannot be empty" }),
+    date: z.string().refine(isValidExpenseDate, { message: "Date must be a real YYYY-MM-DD date or ISO 8601 datetime" }),
+    amount: z.number().int({ message: "Amount must be an integer" }).positive({ message: "Amount must be positive" }).safe(),
+    description: z.string().min(1, { message: "Description cannot be empty" }).max(500),
+    category: z.string().min(1, { message: "Category cannot be empty" }).max(100),
 });
 
 // Type inferred from ExpenseSchema
@@ -79,8 +80,8 @@ export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
 
 // Schema for PATCH /api/expenses/category (batch category reassignment)
 export const BatchCategoryUpdateSchema = z.object({
-    oldCategory: z.string().min(1, { message: "oldCategory is required" }),
-    newCategory: z.string().min(1, { message: "newCategory is required" }),
+    oldCategory: z.string().min(1, { message: "oldCategory is required" }).max(100),
+    newCategory: z.string().min(1, { message: "newCategory is required" }).max(100),
 });
 
 export type BatchCategoryUpdate = z.infer<typeof BatchCategoryUpdateSchema>;

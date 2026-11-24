@@ -1,12 +1,17 @@
 {
   "name": "expense-tracker",
   "main": "index.js",
-  "compatibility_date": "2025-07-27",
+  "compatibility_date": "2026-11-24",
   "assets": {
-    "directory": "./public/"
+    "directory": "./public/",
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
   "env": {
     "production": {
+      "vars": {
+        "APP_ENV": "production"
+      },
       "routes": [
         {
           "pattern": "expensetracker.hgnlab.org",
@@ -31,6 +36,10 @@
       }
     },
     "development": {
+      "vars": {
+        "APP_ENV": "development",
+        "ALLOW_UNAUTHENTICATED_LOCAL": "true"
+      },
       "d1_databases": [
         {
           "binding": "D1_DATABASE",
@@ -43,6 +52,9 @@
       }
     },
     "staging": {
+      "vars": {
+        "APP_ENV": "staging"
+      },
       "routes": [
         {
           "pattern": "stagetracker.hgnlab.org",

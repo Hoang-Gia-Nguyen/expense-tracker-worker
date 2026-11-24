@@ -2,43 +2,27 @@ import { Router } from 'itty-router';
 import { errorHandlerMiddleware } from '../middleware/errorHandler';
 import { getCorsHeaders } from '../middleware/cors';
 import { AppError } from '../utils/AppError';
+import { parseJsonBody } from '../utils/parseJsonBody';
+import { isValidCalendarDate } from '../utils/dateValidation';
 import { z } from 'zod';
 
 const investmentsRouter = Router();
 
 // Schemas
 const InvestmentInputSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z.string().refine(isValidCalendarDate, { message: 'Date must be a real YYYY-MM-DD date' }),
   type: z.enum(['BUY', 'SELL']),
-  productName: z.string().min(1),
-  quantity: z.number().positive(),
-  unit: z.string().min(1),
-  unitPrice: z.number().int().positive(),
-  totalValue: z.number().int().positive(),
-  notes: z.string().optional().default(''),
+  productName: z.string().min(1).max(100),
+  quantity: z.number().positive().finite(),
+  unit: z.string().min(1).max(30),
+  unitPrice: z.number().int().positive().safe(),
+  totalValue: z.number().int().positive().safe(),
+  notes: z.string().max(1000).optional().default(''),
 });
 
 const InvestmentDeleteSchema = z.object({
   id: z.number().int().positive(),
 });
-
-async function parseJsonBody(request, schema) {
-  try {
-    const body = await request.json();
-    return schema.parse(body);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new AppError('Invalid JSON format', 400);
-    }
-    if (error.issues) {
-      throw new AppError(
-        `Validation Error: ${error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`,
-        400
-      );
-    }
-    throw error;
-  }
-}
 
 // GET /api/investments
 investmentsRouter.get('/api/investments', async (request, env, context) => {

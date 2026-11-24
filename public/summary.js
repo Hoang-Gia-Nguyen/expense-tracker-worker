@@ -3,6 +3,7 @@
  */
 
 import { applyThemeToChart } from './chartTheme.js';
+import { escapeHtml, safeColor } from './escapeHtml.js';
 const apiBase = '/api/summary';
 
 // Category colors for charts - dynamic palette for any category
@@ -172,7 +173,7 @@ export function createSummaryApp(dom) {
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-body text-center">
                             <div class="text-muted small mb-1">Biggest Category</div>
-                            <div class="fs-5 fw-bold">${data.biggestCategory ? data.biggestCategory.name : 'N/A'}</div>
+                            <div class="fs-5 fw-bold">${data.biggestCategory ? escapeHtml(data.biggestCategory.name) : 'N/A'}</div>
                             <div class="small">${data.biggestCategory ? formatCurrency(data.biggestCategory.amount) : ''}</div>
                         </div>
                     </div>
@@ -191,7 +192,7 @@ export function createSummaryApp(dom) {
                 </div>
             `;
         } catch (err) {
-            statsCards.innerHTML = `<div class="col-12"><div class="alert alert-warning">Could not load stats: ${err.message}</div></div>`;
+            statsCards.innerHTML = `<div class="col-12"><div class="alert alert-warning">Could not load stats: ${escapeHtml(err.message)}</div></div>`;
         }
     }
 
@@ -512,8 +513,8 @@ export function createSummaryApp(dom) {
                 return `
                     <tr>
                         <td>
-                            <span class="badge" style="background-color:${color}">&nbsp;</span>
-                            ${c.category}
+                            <span class="badge" style="background-color:${safeColor(color)}">&nbsp;</span>
+                            ${escapeHtml(c.category)}
                         </td>
                         <td class="text-end">${formatCurrency(c.spend_vnd)}</td>
                         <td class="text-end">${c.percentOfTotal.toFixed(1)}%</td>
@@ -543,8 +544,8 @@ export function createSummaryApp(dom) {
             const rows = data.map((tx, index) => `
                 <tr>
                     <td>${formatDate(tx.date)}</td>
-                    <td>${tx.description}</td>
-                    <td><span class="badge bg-secondary">${tx.category}</span></td>
+                    <td>${escapeHtml(tx.description)}</td>
+                    <td><span class="badge bg-secondary">${escapeHtml(tx.category)}</span></td>
                     <td class="text-end">
                         <strong>${formatCurrency(tx.amount)}</strong>
                         ${index === 0 ? '<i class="bi bi-trophy-fill text-warning ms-2"></i>' : ''}

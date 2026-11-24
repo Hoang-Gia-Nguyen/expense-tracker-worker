@@ -195,6 +195,7 @@
   <script type="module" src="/settings.js"></script>
   <script type="module">
     import { initSettings, openSettingsModal, toggleTheme } from '/settings.js';
+    import { escapeHtml } from '/escapeHtml.js';
 
     // ─── DOM refs ───────────────────────────────────────────
     const form = document.getElementById('investment-form');
@@ -333,9 +334,9 @@
           col.innerHTML = `
             <div class="card text-center h-100">
               <div class="card-body">
-                <div class="fw-semibold">${p.productName}</div>
-                <div class="h4 mb-0">${fmtQty(p.holdings)} <small class="text-muted">${p.unit}</small></div>
-                <div class="text-muted small">Avg cost: ${avgCost} / ${p.unit}</div>
+                <div class="fw-semibold">${escapeHtml(p.productName)}</div>
+                <div class="h4 mb-0">${fmtQty(p.holdings)} <small class="text-muted">${escapeHtml(p.unit)}</small></div>
+                <div class="text-muted small">Avg cost: ${avgCost} / ${escapeHtml(p.unit)}</div>
                 <div class="text-muted small">${p.transactionCount} transaction(s)</div>
               </div>
             </div>
@@ -361,14 +362,14 @@
       items.forEach(t => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${t.date}</td>
+          <td>${escapeHtml(t.date)}</td>
           <td><span class="badge ${t.type === 'BUY' ? 'bg-success' : 'bg-danger'}">${t.type}</span></td>
-          <td>${t.productName}</td>
+          <td>${escapeHtml(t.productName)}</td>
           <td class="text-end">${fmtQty(t.quantity)}</td>
-          <td>${t.unit}</td>
+          <td>${escapeHtml(t.unit)}</td>
           <td class="text-end">${fmt(t.unitPrice)}</td>
           <td class="text-end">${fmt(t.totalValue)}</td>
-          <td>${t.notes || ''}</td>
+          <td>${escapeHtml(t.notes || '')}</td>
           <td class="text-center">
             <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${t.id}" title="Delete">
               <i class="bi bi-trash"></i>
